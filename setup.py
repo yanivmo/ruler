@@ -9,7 +9,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='rulre',
-    version='1.0.0.dev01',
+    version='1.0.0.dev1',
 
     description='Modular regular expressions with practical mismatch reporting',
     long_description=long_description,
@@ -17,7 +17,11 @@ setup(
     author='Yaniv Mordekhay',
     license='MIT',
 
-    packages=find_packages(exclude=['docs', 'tests']),
+    # Add all packages under src
+    packages=find_packages('src'),
+    # src is the root directory for all the packages
+    package_dir={'': 'src'},
+
     # install_requires=[''],
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
