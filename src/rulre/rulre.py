@@ -143,14 +143,14 @@ class Optional(Rule):
     """
 
     def __init__(self, name=''):
-        super().__init__(name)
+        super(Optional, self).__init__(name)
 
     def defined_as(self, *rules):
-        super().defined_as(*rules)
+        super(Optional, self).defined_as(*rules)
         return self
 
     def match(self, text):
-        result = super().match(text)
+        result = super(Optional, self).match(text)
         if not result.is_matching:
             result.is_matching = True
             result.matching_text = ''
@@ -187,4 +187,4 @@ class MatchResult(object):
 class GrammarTokenRedefiition(Exception):
     """Raised if a grammar contains multiple tokens with the same name"""
     def __init__(self, token_name):
-        super().__init__(token_name)
+        super(GrammarTokenRedefiition, self).__init__(token_name)
