@@ -15,6 +15,7 @@ setup(
     long_description=long_description,
     url='https://github.com/yanivmo/rulre',
     author='Yaniv Mordekhay',
+    author_email='yaniv@linuxmail.org',
     license='MIT',
 
     # Add all packages under src
