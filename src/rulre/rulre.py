@@ -133,7 +133,9 @@ class OneOf(object):
             remainder=text[furthest_failure_position:],
             tokens={},
             error_position=furthest_failure_position,
-            error_text='\n'.join(set([e.error_text for e in failures if e.error_position == furthest_failure_position]))
+            error_text='\n'.join(set(
+                [e.error_text for e in failures if e.error_position == furthest_failure_position]
+            ))
         )
 
 

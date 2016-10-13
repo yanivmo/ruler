@@ -3,3 +3,10 @@ from .rulre import \
     RegexRule, \
     Optional, \
     OneOf
+
+__all__ = [
+    'Rule',
+    'RegexRule',
+    'Optional',
+    'OneOf'
+]
