@@ -11,4 +11,4 @@ matrix:
         - python: 3.5
           env: TOXENV=py35
 
-script: tox && coverage report --fail-under=99 --show-missing
+script: tox
