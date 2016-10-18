@@ -8,8 +8,8 @@ Tasks for the first release::
     [ ] docs?
     [ ] Register on PyPI
     [ ] Upload to PyPI
-    [ ] flake8
-    [ ] bumpversion (?)
+    [x] flake8
+    [-] bumpversion (?)
     [ ] AppVeyor
     [ ] isort
 
