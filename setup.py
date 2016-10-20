@@ -23,7 +23,7 @@ setup(
     # src is the root directory for all the packages
     package_dir={'': 'src'},
 
-    # install_requires=[''],
+    install_requires=['six'],
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[

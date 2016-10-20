@@ -1,3 +1,5 @@
+from pytest import raises
+
 import rulre
 
 
@@ -186,3 +188,33 @@ class TestOneOfRule:
         assert 'r1' not in m.tokens
         assert 'r2' not in m.tokens
         assert 'r3' not in m.tokens
+
+
+class TestTokens:
+    def test_sibling_redefinition(self):
+        r = rulre.Rule().defined_as(
+                rulre.Rule('A').defined_as('a'),
+                rulre.Rule('A').defined_as('b'))
+
+        m = r.match('a')
+        assert not m.is_matching, m.error_text
+        assert m.matching_text == 'a'
+        assert m.error_position == 1
+        assert m.tokens['A'] == 'a'
+
+        with raises(rulre.TokenRedefinitionError):
+            r.match('ab')
+
+    def test_child_redefinition(self):
+        r = rulre.Rule().defined_as(
+                rulre.Rule('A').defined_as(
+                    'a',
+                    rulre.Rule('A').defined_as('b')))
+
+        m = r.match('a')
+        assert not m.is_matching, m.error_text
+        assert m.matching_text == 'a'
+        assert m.error_position == 1
+
+        with raises(rulre.TokenRedefinitionError):
+            r.match('ab')

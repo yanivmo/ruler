@@ -6,6 +6,7 @@ Grammar parsing library
 """
 
 import re
+import six
 
 
 class Rule(object):
@@ -26,10 +27,6 @@ class Rule(object):
                 self._rules.append(rule)
         return self
 
-    @property
-    def rule_structure(self):
-        return self._name, [r.rule_structure for r in self._rules]
-
     def match(self, text):
         text_to_match = text
         result = MatchResult()
@@ -38,7 +35,13 @@ class Rule(object):
         for subrule in self._rules:
             # Try to match the next rule
             subrule_match = subrule.match(text_to_match)  # type: MatchResult
-            result.tokens.update(subrule_match.tokens)
+
+            # Ensure no token is encountered twice
+            double_tokens = six.viewkeys(subrule_match.tokens) & six.viewkeys(result.tokens)
+            if double_tokens:
+                raise TokenRedefinitionError(double_tokens.pop())
+            else:
+                result.tokens.update(subrule_match.tokens)
 
             if subrule_match.is_matching:
                 # What is left after the current rule will be matched against the next rule
@@ -57,7 +60,7 @@ class Rule(object):
 
             if self._name:
                 if self._name in result.tokens:
-                    raise GrammarTokenRedefiition(self._name)
+                    raise TokenRedefinitionError(self._name)
                 result.tokens[self._name] = result.matching_text
         else:
             result.matching_text = text[:result.error_position]
@@ -73,10 +76,6 @@ class RegexRule(object):
     def __init__(self, regex):
         self._regex_text = regex
         self._regex = re.compile(regex)
-
-    @property
-    def rule_structure(self):
-        return self._regex_text
 
     def match(self, text):
         m = self._regex.match(text)
@@ -107,10 +106,6 @@ class OneOf(object):
                 self._rules.append(RegexRule(rule))
             else:
                 self._rules.append(rule)
-
-    @property
-    def rule_structure(self):
-        return [r.rule_structure for r in self._rules]
 
     def match(self, text):
         failures = []
@@ -186,7 +181,7 @@ class MatchResult(object):
             self.__dict__[key] = value
 
 
-class GrammarTokenRedefiition(Exception):
+class TokenRedefinitionError(Exception):
     """Raised if a grammar contains multiple tokens with the same name"""
     def __init__(self, token_name):
-        super(GrammarTokenRedefiition, self).__init__(token_name)
+        super(TokenRedefinitionError, self).__init__(token_name)
