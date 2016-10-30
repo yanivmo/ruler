@@ -139,12 +139,9 @@ class Optional(Rule):
     An optional rule.
     """
 
-    def __init__(self, name=''):
-        super(Optional, self).__init__(name)
-
-    def defined_as(self, *rules):
+    def __init__(self, *rules):
+        super(Optional, self).__init__()
         super(Optional, self).defined_as(*rules)
-        return self
 
     def match(self, text):
         result = super(Optional, self).match(text)

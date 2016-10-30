@@ -79,13 +79,13 @@ class TestRule:
 
 class TestOptionalRule:
     def test_simplest_rule(self):
-        r = rulre.Optional('r1').defined_as('a')
+        r = rulre.Optional('a')
 
         m = r.match('a')
         assert m.is_matching
         assert m.matching_text == 'a'
         assert m.remainder == ''
-        assert m.tokens['r1'] == 'a'
+        assert len(m.tokens) == 0
 
         m = r.match('b')
         assert m.is_matching
@@ -96,8 +96,8 @@ class TestOptionalRule:
     def test_compound(self):
         r = rulre.Rule('r1').defined_as(
             'a',
-            rulre.Optional('r1.1').defined_as('b'),
-            rulre.Optional('r1.2').defined_as('c', 'd'),
+            rulre.Optional(rulre.Rule('r1.1').defined_as('b')),
+            rulre.Optional(rulre.Rule('r1.2').defined_as('c', 'd')),
             'e')
 
         m = r.match('abcde')
@@ -190,7 +190,7 @@ class TestOneOfRule:
         assert 'r3' not in m.tokens
 
 
-class TestTokens:
+class TestTokenErrors:
     def test_sibling_redefinition(self):
         r = rulre.Rule().defined_as(
                 rulre.Rule('A').defined_as('a'),
