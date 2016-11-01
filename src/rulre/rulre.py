@@ -9,24 +9,43 @@ import re
 import six
 
 
-class Rule(object):
+class BaseRule(object):
     """
-    This rule matches if all of its sub-rules match.
+    The base class of all the rule types.
     """
+    def __init__(self):
+        self._name = ''
 
-    def __init__(self, name=''):
-        self._name = name
+    def name(self, rule_name):
+        self._name = rule_name
+        return self
+
+    def match(self, text):
+        raise NotImplementedError
+
+
+class CompoundRule(BaseRule):
+    """
+    The base class of all the rules composed of sub-rules.
+    """
+    def __init__(self, *rules):
+        super(CompoundRule, self).__init__()
+
         self._rules = []
-
-    def defined_as(self, *rules):
-        """Define the rule expression"""
         for rule in rules:
             if str(rule) == rule:
                 self._rules.append(RegexRule(rule))
             else:
                 self._rules.append(rule)
-        return self
 
+    def match(self, text):
+        raise NotImplementedError
+
+
+class Rule(CompoundRule):
+    """
+    This rule matches if all of its sub-rules match.
+    """
     def match(self, text):
         text_to_match = text
         result = MatchResult()
@@ -68,12 +87,13 @@ class Rule(object):
         return result
 
 
-class RegexRule(object):
+class RegexRule(BaseRule):
     """
     A rule defined using a regular expression.
     """
-
     def __init__(self, regex):
+        super(RegexRule, self).__init__()
+
         self._regex_text = regex
         self._regex = re.compile(regex)
 
@@ -84,6 +104,7 @@ class RegexRule(object):
                 is_matching=True,
                 matching_text=m.group(),
                 remainder=text[m.end():],
+                tokens={self._name: m.group()} if self._name else {}
             )
         else:
             return MatchResult(
@@ -94,19 +115,10 @@ class RegexRule(object):
             )
 
 
-class OneOf(object):
+class OneOf(CompoundRule):
     """
     This rule matches if one of its sub-rules matches.
     """
-
-    def __init__(self, *rules):
-        self._rules = []
-        for rule in rules:
-            if str(rule) == rule:
-                self._rules.append(RegexRule(rule))
-            else:
-                self._rules.append(rule)
-
     def match(self, text):
         failures = []
         furthest_failure_position = 0
@@ -115,6 +127,11 @@ class OneOf(object):
             result = subrule.match(text)
 
             if result.is_matching:
+                if self._name:
+                    if self._name in result.tokens:
+                        raise TokenRedefinitionError(self._name)
+                    result.tokens[self._name] = result.matching_text
+
                 return result
             else:
                 failures.append(result)
@@ -138,10 +155,8 @@ class Optional(Rule):
     """
     An optional rule.
     """
-
     def __init__(self, *rules):
-        super(Optional, self).__init__()
-        super(Optional, self).defined_as(*rules)
+        super(Optional, self).__init__(*rules)
 
     def match(self, text):
         result = super(Optional, self).match(text)
