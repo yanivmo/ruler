@@ -1,6 +1,7 @@
 from pytest import raises
 
 import rulre
+from rulre import Rule, Optional, OneOf
 
 
 class TestRegexRule:
@@ -30,7 +31,7 @@ class TestRegexRule:
 
 class TestRule:
     def test_simplest_rule(self):
-        r = rulre.Rule('a').name('r1')
+        r = Rule('a').name('r1')
 
         m = r.match('a')
         assert m.is_matching
@@ -43,7 +44,7 @@ class TestRule:
         assert m.error_position == 0, m.error_text
 
     def test_chained_simplest_rules(self):
-        r = rulre.Rule('a', 'b', 'c').name('r1')
+        r = Rule('a', 'b', 'c').name('r1')
 
         m = r.match('abcdefg')
         assert m.is_matching
@@ -56,13 +57,13 @@ class TestRule:
         assert m.error_position == 2, m.error_text
 
     def test_nested_rules(self):
-        r = rulre.Rule(
+        r = Rule(
             'a',
-            rulre.Rule(
+            Rule(
                 'b',
-                rulre.Rule('c', 'd').name('r1.1.1')
+                Rule('c', 'd').name('r1.1.1')
             ).name('r1.1'),
-            rulre.Rule('e').name('r1.2')
+            Rule('e').name('r1.2')
         ).name('r1')
 
         m = r.match('abcde')
@@ -81,7 +82,7 @@ class TestRule:
 
 class TestOptionalRule:
     def test_simplest_rule(self):
-        r = rulre.Optional('a')
+        r = Optional('a')
 
         m = r.match('a')
         assert m.is_matching
@@ -96,10 +97,10 @@ class TestOptionalRule:
         assert len(m.tokens) == 0
 
     def test_compound(self):
-        r = rulre.Rule(
+        r = Rule(
             'a',
-            rulre.Optional('b').name('r1.1'),
-            rulre.Optional('c', 'd').name('r1.2'),
+            Optional('b').name('r1.1'),
+            Optional('c', 'd').name('r1.2'),
             'e'
         ).name('r1')
 
@@ -130,7 +131,7 @@ class TestOptionalRule:
 
 class TestOneOfRule:
     def test_simplest_rule(self):
-        r = rulre.OneOf('a', 'b', 'c').name('letter')
+        r = OneOf('a', 'b', 'c').name('letter')
 
         m = r.match('a')
         assert m.is_matching
@@ -157,10 +158,10 @@ class TestOneOfRule:
         assert len(m.tokens) == 0
 
     def test_compound(self):
-        r = rulre.OneOf(
-            rulre.Rule('a').name('r1'),
-            rulre.Rule('b', '1').name('r2'),
-            rulre.Rule('b', '2').name('r3')
+        r = OneOf(
+            Rule('a').name('r1'),
+            Rule('b', '1').name('r2'),
+            Rule('b', '2').name('r3')
         ).name('one-of')
 
         m = r.match('a')
@@ -204,9 +205,9 @@ class TestOneOfRule:
 
 class TestTokenErrors:
     def test_sibling_redefinition(self):
-        r = rulre.Rule(
-            rulre.Rule('a').name('A'),
-            rulre.Rule('b').name('A')
+        r = Rule(
+            Rule('a').name('A'),
+            Rule('b').name('A')
         )
 
         m = r.match('a')
@@ -219,10 +220,10 @@ class TestTokenErrors:
             r.match('ab')
 
     def test_child_redefinition(self):
-        r = rulre.Rule(
-            rulre.Rule(
+        r = Rule(
+            Rule(
                 'a',
-                rulre.Rule('b').name('A')
+                Rule('b').name('A')
             ).name('A')
         )
 
@@ -235,9 +236,9 @@ class TestTokenErrors:
             r.match('ab')
 
     def test_oneof(self):
-        r = rulre.OneOf(
-            rulre.Rule('a').name('A'),
-            rulre.Rule('b').name('B'),
+        r = OneOf(
+            Rule('a').name('A'),
+            Rule('b').name('B'),
         ).name('A')
 
         m = r.match('bb')
@@ -249,6 +250,64 @@ class TestTokenErrors:
 
         with raises(rulre.TokenRedefinitionError):
             r.match('ab')
+
+
+class TestAutomaticRuleNaming:
+
+    def test_example(self):
+        """
+        Implementation of the following grammar::
+
+            grammar = who, ' likes to drink ', what;
+            who = 'John' | 'Peter' | 'Ann';
+            what = tea | juice;
+            juice = 'juice';
+            tea = 'tea', [ ' with ', milk ];
+            milk = 'milk';
+        """
+        class Morning(Rule):
+            who = OneOf('John', 'Peter', 'Ann')
+            juice = Rule('juice')
+            milk = Rule('milk')
+            tea = Rule('tea', Optional(' with ', milk))
+            what = OneOf(juice, tea)
+
+            grammar = Rule(who, ' likes to drink ', what, '\.')
+
+            def __init__(self):
+                super(Morning, self).__init__(self.grammar)
+
+        morning_rule = Morning()
+
+        with raises(rulre.rulre.RuleNamingError):
+            morning_rule.grammar.name('')
+
+        m = morning_rule.match('Ann likes to drink tea with milk.')
+        assert m.is_matching
+        assert m.tokens == {
+            'grammar': 'Ann likes to drink tea with milk.',
+            'who': 'Ann',
+            'what': 'tea with milk',
+            'milk': 'milk',
+            'tea': 'tea with milk'
+        }
+
+        m = morning_rule.match('Peter likes to drink tea.')
+        assert m.is_matching
+        assert m.tokens == {
+            'grammar': 'Peter likes to drink tea.',
+            'who': 'Peter',
+            'what': 'tea',
+            'tea': 'tea'
+        }
+
+        m = morning_rule.match('Peter likes to drink coffee.')
+        assert not m.is_matching
+        assert m.error_position == 21
+
+        m = morning_rule.match('Peter likes to drink tea with lemon.')
+        assert not m.is_matching
+        assert m.error_position == 24
 
 
 class TestAbstractClasses:

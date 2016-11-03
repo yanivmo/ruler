@@ -13,15 +13,32 @@ class BaseRule(object):
     """
     The base class of all the rule types.
     """
+
     def __init__(self):
         self._name = ''
 
-    def name(self, rule_name):
-        self._name = rule_name
-        return self
+        # If there are member variables that are rules
+        # try to set their names
+        for attr_name in dir(self):
+            attr = self.__getattribute__(attr_name)
+            if isinstance(attr, BaseRule):
+                attr._name_if_nameless(attr_name)
 
     def match(self, text):
         raise NotImplementedError
+
+    def name(self, rule_name):
+        if self._name:
+            raise RuleNamingError(self._name)
+        self._rename(rule_name)
+        return self
+
+    def _name_if_nameless(self, rule_name):
+        if not self._name:
+            self._rename(rule_name)
+
+    def _rename(self, rule_name):
+        self._name = rule_name
 
 
 class CompoundRule(BaseRule):
@@ -197,3 +214,9 @@ class TokenRedefinitionError(Exception):
     """Raised if a grammar contains multiple tokens with the same name"""
     def __init__(self, token_name):
         super(TokenRedefinitionError, self).__init__(token_name)
+
+
+class RuleNamingError(Exception):
+    """Raised on an attempt to set a name to an already named rule"""
+    def __init__(self, name):
+        super(RuleNamingError, self).__init__("Trying to rename an already named rule " + name)
