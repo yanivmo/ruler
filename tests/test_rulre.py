@@ -1,7 +1,7 @@
 from pytest import raises
 
 import rulre
-from rulre import Rule, Optional, OneOf
+from rulre import Rule, Optional, OneOf, Grammar
 
 
 class TestRegexRule:
@@ -265,7 +265,7 @@ class TestAutomaticRuleNaming:
             tea = 'tea', [ ' with ', milk ];
             milk = 'milk';
         """
-        class Morning(Rule):
+        class Morning(Grammar):
             who = OneOf('John', 'Peter', 'Ann')
             juice = Rule('juice')
             milk = Rule('milk')
@@ -284,6 +284,8 @@ class TestAutomaticRuleNaming:
 
         m = morning_rule.match('Ann likes to drink tea with milk.')
         assert m.is_matching
+        assert m['who'] == 'Ann'
+        assert 'juice' not in m
         assert m.tokens == {
             'grammar': 'Ann likes to drink tea with milk.',
             'who': 'Ann',

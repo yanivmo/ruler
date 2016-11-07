@@ -9,6 +9,20 @@ import re
 import six
 
 
+class Grammar(object):
+    def __init__(self, rule):
+        # Collect and name member rules
+        for attr_name in dir(self):
+            attr = self.__getattribute__(attr_name)
+            if isinstance(attr, BaseRule):
+                attr.name(attr_name)
+
+        self._root_rule = rule
+
+    def match(self, text):
+        return self._root_rule.match(text)
+
+
 class BaseRule(object):
     """
     The base class of all the rule types.
@@ -17,28 +31,14 @@ class BaseRule(object):
     def __init__(self):
         self._name = ''
 
-        # If there are member variables that are rules
-        # try to set their names
-        for attr_name in dir(self):
-            attr = self.__getattribute__(attr_name)
-            if isinstance(attr, BaseRule):
-                attr._name_if_nameless(attr_name)
-
     def match(self, text):
         raise NotImplementedError
 
     def name(self, rule_name):
-        if self._name:
+        if self._name and self._name != rule_name:
             raise RuleNamingError(self._name)
-        self._rename(rule_name)
-        return self
-
-    def _name_if_nameless(self, rule_name):
-        if not self._name:
-            self._rename(rule_name)
-
-    def _rename(self, rule_name):
         self._name = rule_name
+        return self
 
 
 class CompoundRule(BaseRule):
@@ -208,6 +208,12 @@ class MatchResult(object):
 
         for key, value in kwargs.items():
             self.__dict__[key] = value
+
+    def __getitem__(self, token):
+        return self.tokens[token]
+
+    def __contains__(self, token):
+        return token in self.tokens
 
 
 class TokenRedefinitionError(Exception):

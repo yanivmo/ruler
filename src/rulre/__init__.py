@@ -1,4 +1,5 @@
 from .rulre import \
+    Grammar, \
     Rule, \
     RegexRule, \
     Optional, \
@@ -6,9 +7,10 @@ from .rulre import \
     TokenRedefinitionError
 
 __all__ = [
+    'Grammar',
     'Rule',
     'RegexRule',
     'Optional',
     'OneOf',
-    'TokenRedefinitionError'
+    'TokenRedefinitionError',
 ]
