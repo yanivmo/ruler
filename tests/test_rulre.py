@@ -31,7 +31,7 @@ class TestRegexRule:
 
 class TestRule:
     def test_simplest_rule(self):
-        r = Rule('a').name('r1')
+        r = Rule.with_name('r1')('a')
 
         m = r.match('a')
         assert m.is_matching
@@ -44,7 +44,7 @@ class TestRule:
         assert m.error_position == 0, m.error_text
 
     def test_chained_simplest_rules(self):
-        r = Rule('a', 'b', 'c').name('r1')
+        r = Rule.with_name('r1')('a', 'b', 'c')
 
         m = r.match('abcdefg')
         assert m.is_matching
@@ -57,14 +57,12 @@ class TestRule:
         assert m.error_position == 2, m.error_text
 
     def test_nested_rules(self):
-        r = Rule(
-            'a',
-            Rule(
-                'b',
-                Rule('c', 'd').name('r1.1.1')
-            ).name('r1.1'),
-            Rule('e').name('r1.2')
-        ).name('r1')
+        r = Rule.with_name('r1')(
+                'a',
+                Rule.with_name('r1.1')(
+                    'b',
+                    Rule.with_name('r1.1.1')('c', 'd')),
+                Rule.with_name('r1.2')('e'))
 
         m = r.match('abcde')
         assert m.is_matching
@@ -97,12 +95,11 @@ class TestOptionalRule:
         assert len(m.tokens) == 0
 
     def test_compound(self):
-        r = Rule(
-            'a',
-            Optional('b').name('r1.1'),
-            Optional('c', 'd').name('r1.2'),
-            'e'
-        ).name('r1')
+        r = Rule.with_name('r1')(
+                'a',
+                Optional.with_name('r1.1')('b'),
+                Optional.with_name('r1.2')('c', 'd'),
+                'e')
 
         m = r.match('abcde')
         assert m.is_matching
@@ -131,7 +128,7 @@ class TestOptionalRule:
 
 class TestOneOfRule:
     def test_simplest_rule(self):
-        r = OneOf('a', 'b', 'c').name('letter')
+        r = OneOf.with_name('letter')('a', 'b', 'c')
 
         m = r.match('a')
         assert m.is_matching
@@ -158,11 +155,10 @@ class TestOneOfRule:
         assert len(m.tokens) == 0
 
     def test_compound(self):
-        r = OneOf(
-            Rule('a').name('r1'),
-            Rule('b', '1').name('r2'),
-            Rule('b', '2').name('r3')
-        ).name('one-of')
+        r = OneOf.with_name('one-of')(
+                Rule.with_name('r1')('a'),
+                Rule.with_name('r2')('b', '1'),
+                Rule.with_name('r3')('b', '2'))
 
         m = r.match('a')
         assert m.is_matching
@@ -205,10 +201,8 @@ class TestOneOfRule:
 
 class TestTokenErrors:
     def test_sibling_redefinition(self):
-        r = Rule(
-            Rule('a').name('A'),
-            Rule('b').name('A')
-        )
+        r = Rule(Rule.with_name('A')('a'),
+                 Rule.with_name('A')('b'))
 
         m = r.match('a')
         assert not m.is_matching, m.error_text
@@ -220,12 +214,9 @@ class TestTokenErrors:
             r.match('ab')
 
     def test_child_redefinition(self):
-        r = Rule(
-            Rule(
-                'a',
-                Rule('b').name('A')
-            ).name('A')
-        )
+        r = Rule.with_name('A')(
+                Rule('a',
+                     Rule.with_name('A')('b')))
 
         m = r.match('a')
         assert not m.is_matching, m.error_text
@@ -236,10 +227,9 @@ class TestTokenErrors:
             r.match('ab')
 
     def test_oneof(self):
-        r = OneOf(
-            Rule('a').name('A'),
-            Rule('b').name('B'),
-        ).name('A')
+        r = OneOf.with_name('A')(
+                Rule.with_name('A')('a'),
+                Rule.with_name('B')('b'))
 
         m = r.match('bb')
         assert m.is_matching
@@ -279,8 +269,9 @@ class TestAutomaticRuleNaming:
 
         morning_rule = Morning()
 
+        assert morning_rule.grammar.name == 'grammar'
         with raises(rulre.rulre.RuleNamingError):
-            morning_rule.grammar.name('')
+            morning_rule.grammar.name = ''
 
         m = morning_rule.match('Ann likes to drink tea with milk.')
         assert m.is_matching

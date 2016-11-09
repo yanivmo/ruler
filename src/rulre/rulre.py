@@ -15,7 +15,7 @@ class Grammar(object):
         for attr_name in dir(self):
             attr = self.__getattribute__(attr_name)
             if isinstance(attr, BaseRule):
-                attr.name(attr_name)
+                attr.name = attr_name
 
         self._root_rule = rule
 
@@ -34,11 +34,15 @@ class BaseRule(object):
     def match(self, text):
         raise NotImplementedError
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
     def name(self, rule_name):
         if self._name and self._name != rule_name:
             raise RuleNamingError(self._name)
         self._name = rule_name
-        return self
 
 
 class CompoundRule(BaseRule):
@@ -57,6 +61,14 @@ class CompoundRule(BaseRule):
 
     def match(self, text):
         raise NotImplementedError
+
+    @classmethod
+    def with_name(cls, rule_name):
+        def factory(*rules):
+            rule = cls(*rules)
+            rule.name = rule_name
+            return rule
+        return factory
 
 
 class Rule(CompoundRule):
