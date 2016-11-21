@@ -5,6 +5,10 @@ Grammar parsing library
 - Reports precise error position and the failure reason
 """
 
+# TODO: Consider adding empty optional matches as None (similarly to OneOf)
+# TODO: Consider adding automatic match comparison with strings
+# TODO: Consider adding default root rule
+
 import re
 import six
 
@@ -70,6 +74,32 @@ class CompoundRule(BaseRule):
             return rule
         return factory
 
+    @classmethod
+    def _build_match(cls, matched_text, sub_rule_matches):
+        """
+        Match object factory.
+        :param matched_text: The text that was matched.
+        :param sub_rule_matches: A list of pairs mapping sub-rule objects to their matches.
+        :return: A tuple (Match, None)
+        """
+        matches = {}
+        for rule, match in sub_rule_matches:
+            if rule.name:
+                # The sub-rule has a name, add its match as my sub-match
+                if rule.name in matches:
+                    raise TokenRedefinitionError(rule.name)
+                else:
+                    matches[rule.name] = match
+            elif match:  # match is allowed to be None here
+                # The sub-rule doesn't have a name, add its sub-matches as my own sub-matches
+                for rule_name, sub_match in match:
+                    if rule_name in matches:
+                        raise TokenRedefinitionError(rule_name)
+                    else:
+                        matches[rule_name] = sub_match
+
+        return Match(matched_text, matches), None
+
 
 class Rule(CompoundRule):
     """
@@ -77,43 +107,23 @@ class Rule(CompoundRule):
     """
     def match(self, text):
         text_to_match = text
-        result = MatchResult()
+        sub_rule_matches = []
 
         # Advance through the text, matching each iteration the next rule
-        for subrule in self._rules:
+        for sub_rule in self._rules:
             # Try to match the next rule
-            subrule_match = subrule.match(text_to_match)  # type: MatchResult
+            match, mismatch = sub_rule.match(text_to_match)
 
-            # Ensure no token is encountered twice
-            double_tokens = six.viewkeys(subrule_match.tokens) & six.viewkeys(result.tokens)
-            if double_tokens:
-                raise TokenRedefinitionError(double_tokens.pop())
+            if mismatch:
+                mismatch_position = len(text) - len(text_to_match) + mismatch.position
+                return None, Mismatch(mismatch_position, mismatch.description)
             else:
-                result.tokens.update(subrule_match.tokens)
+                # Remove the matched part from the text
+                text_to_match = text_to_match[len(match):]
+                sub_rule_matches.append((sub_rule, match))
 
-            if subrule_match.is_matching:
-                # What is left after the current rule will be matched against the next rule
-                text_to_match = subrule_match.remainder  # type: str
-                # Track position in case we encounter an error
-                result.error_position += len(subrule_match.matching_text)
-            else:
-                result.is_matching = False
-                result.error_position += subrule_match.error_position
-                result.error_text = subrule_match.error_text
-                break
-
-        if result.is_matching:
-            result.matching_text = text[:-len(text_to_match)] if text_to_match else text
-            result.remainder = text_to_match
-
-            if self._name:
-                if self._name in result.tokens:
-                    raise TokenRedefinitionError(self._name)
-                result.tokens[self._name] = result.matching_text
-        else:
-            result.matching_text = text[:result.error_position]
-            result.remainder = text[result.error_position:]
-        return result
+        matched_text = text[:-len(text_to_match)] if text_to_match else text
+        return self._build_match(matched_text, sub_rule_matches)
 
 
 class RegexRule(BaseRule):
@@ -129,19 +139,9 @@ class RegexRule(BaseRule):
     def match(self, text):
         m = self._regex.match(text)
         if m:
-            return MatchResult(
-                is_matching=True,
-                matching_text=m.group(),
-                remainder=text[m.end():],
-                tokens={self._name: m.group()} if self._name else {}
-            )
+            return Match(m.group(), {}), None
         else:
-            return MatchResult(
-                is_matching=False,
-                remainder=text,
-                error_text='"{}" does not match "{}"'.format(text, self._regex.pattern),
-                error_position=0
-            )
+            return None, Mismatch(0, '"{}" does not match "{}"'.format(text, self._regex.pattern))
 
 
 class OneOf(CompoundRule):
@@ -149,35 +149,33 @@ class OneOf(CompoundRule):
     This rule matches if one of its sub-rules matches.
     """
     def match(self, text):
-        failures = []
-        furthest_failure_position = 0
+        matches = []
+        mismatches = []
+        matched_text = None
+        furthest_mismatch_position = 0
 
-        for subrule in self._rules:
-            result = subrule.match(text)
-
-            if result.is_matching:
-                if self._name:
-                    if self._name in result.tokens:
-                        raise TokenRedefinitionError(self._name)
-                    result.tokens[self._name] = result.matching_text
-
-                return result
+        for sub_rule in self._rules:
+            # If already matched, just write down the names
+            if matched_text:
+                matches.append((sub_rule, None))
             else:
-                failures.append(result)
-                if result.error_position > furthest_failure_position:
-                    furthest_failure_position = result.error_position
+                match, mismatch = sub_rule.match(text)
 
-        # None of the rules matched
-        return MatchResult(
-            is_matching=False,
-            matching_text=text[:furthest_failure_position],
-            remainder=text[furthest_failure_position:],
-            tokens={},
-            error_position=furthest_failure_position,
-            error_text='\n'.join(set(
-                [e.error_text for e in failures if e.error_position == furthest_failure_position]
-            ))
-        )
+                if match:
+                    matched_text = str(match)
+                    matches.append((sub_rule, match))
+                else:
+                    matches.append((sub_rule, None))
+                    mismatches.append(mismatch)
+                    if mismatch.position > furthest_mismatch_position:
+                        furthest_mismatch_position = mismatch.position
+
+        if matched_text:
+            return self._build_match(matched_text, matches)
+        else:
+            description = '\n'.join(set(
+                [m.description for m in mismatches if m.position == furthest_mismatch_position]))
+            return None, Mismatch(furthest_mismatch_position, description)
 
 
 class Optional(Rule):
@@ -188,44 +186,46 @@ class Optional(Rule):
         super(Optional, self).__init__(*rules)
 
     def match(self, text):
-        result = super(Optional, self).match(text)
-        if not result.is_matching:
-            result.is_matching = True
-            result.matching_text = ''
-            result.remainder = text
-            result.tokens = {}
-            result.error_text = ''
-            result.error_position = 0
-        return result
+        match, mismatch = super(Optional, self).match(text)
+        if mismatch:
+            return Match('', {}), None
+        else:
+            return match, None
 
 
-class MatchResult(object):
-    """
-    Describes a result of a rule application.
-    Attributes:
-        - is_matching    - True if the text matches the rule
-        - matching_text  - The portion of the text that matched the rule
-        - remainder      - The remaining text that was not consumed by the rule
-        - tokens         - A dictionary of tokens matched by the rule
-        - error_text     - Error message if there was no match
-        - error_position - The position in the text that caused the match failure
-    """
-    def __init__(self, **kwargs):
-        self.is_matching = True
-        self.matching_text = ''
-        self.remainder = ''
-        self.tokens = {}
-        self.error_text = ''
-        self.error_position = 0
+class Match(object):
 
-        for key, value in kwargs.items():
-            self.__dict__[key] = value
+    def __init__(self, text, sub_matches):
+        self._text = text
+        self._sub_matches = sub_matches  # type: dict
 
-    def __getitem__(self, token):
-        return self.tokens[token]
+    def __str__(self):
+        return self._text
 
-    def __contains__(self, token):
-        return token in self.tokens
+    def __len__(self):
+        return len(self._text)
+
+    def __bool__(self):
+        """
+        Always True in boolean expressions. If this method is not defined, __len__ will be used,
+        meaning the object will be evaluated as False for empty matches.
+        """
+        return True
+
+    def __getattr__(self, item):
+        if item in self._sub_matches:
+            return self._sub_matches[item]
+        else:
+            raise AttributeError(item)
+
+    def __iter__(self):
+        return six.iteritems(self._sub_matches)
+
+
+class Mismatch(object):
+    def __init__(self, position, description):
+        self.position = position
+        self.description = description
 
 
 class TokenRedefinitionError(Exception):
