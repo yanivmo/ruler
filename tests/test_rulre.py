@@ -83,11 +83,11 @@ class TestOptionalRule:
         r = Optional('a')
 
         m, e = r.match('a')
-        assert m and not e
+        assert m and not e, '{} {}'.format(repr(m), repr(e))
         assert str(m) == 'a'
 
         m, e = r.match('b')
-        assert m and not e
+        assert m and not e, '{} {}'.format(repr(m), repr(e))
         assert str(m) == ''
 
     def test_optional_child(self):
@@ -261,16 +261,13 @@ class TestAutomaticRuleNaming:
             tea = Rule('tea', maybe_milk)
             what = OneOf(juice, tea)
 
-            grammar = Rule(who, ' likes to drink ', what, '\.')
-
-            def __init__(self):
-                super(Morning, self).__init__(self.grammar)
+            _grammar_ = Rule(who, ' likes to drink ', what, '\.')
 
         morning_rule = Morning()
 
-        assert morning_rule.grammar.name == 'grammar'
+        assert morning_rule.juice.name == 'juice'
         with raises(rulre.rulre.RuleNamingError):
-            morning_rule.grammar.name = ''
+            morning_rule.juice.name = ''
 
         m, e = morning_rule.match('Ann likes to drink tea with milk.')
         assert m

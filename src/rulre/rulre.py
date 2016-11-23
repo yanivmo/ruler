@@ -8,20 +8,26 @@ Grammar parsing library
 # TODO: Consider adding empty optional matches as None (similarly to OneOf)
 # TODO: Consider adding automatic match comparison with strings
 # TODO: Consider adding default root rule
+# TODO: Change six
 
 import re
 import six
+from builtins import object
 
 
 class Grammar(object):
-    def __init__(self, rule):
+    def __init__(self, rule=None):
         # Collect and name member rules
         for attr_name in dir(self):
             attr = self.__getattribute__(attr_name)
             if isinstance(attr, BaseRule):
                 attr.name = attr_name
 
-        self._root_rule = rule
+        if rule:
+            self._root_rule = rule
+        elif '_grammar_' in dir(self):
+            # noinspection PyUnresolvedReferences
+            self._root_rule = self._grammar_
 
     def match(self, text):
         return self._root_rule.match(text)
