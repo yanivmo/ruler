@@ -41,7 +41,7 @@ class TestRegexRule:
 
         assert m
         assert not e
-        assert str(m) == 'abcde'
+        assert m == 'abcde'
 
     def test_partial_match(self):
         r = RegexRule('abcde')
@@ -49,7 +49,7 @@ class TestRegexRule:
 
         assert m
         assert not e
-        assert str(m) == 'abcde'
+        assert m == 'abcde'
 
     def test_match_not_from_start(self):
         r = RegexRule('abcde')
@@ -67,7 +67,7 @@ class TestRule:
 
         m, e = r.match('a')
         assert m and not e
-        assert str(m) == 'a'
+        assert m == 'a'
 
         m, e = r.match('b')
         assert e and not m
@@ -78,7 +78,7 @@ class TestRule:
 
         m, e = r.match('abcdefg')
         assert m and not e
-        assert str(m) == 'abc'
+        assert m == 'abc'
 
         m, e = r.match('abdefg')
         assert e and not m
@@ -98,7 +98,7 @@ class TestRule:
 
         m, e = g.match('abcde')
         assert m and not e
-        assert str(m) == 'abcde'
+        assert m == 'abcde'
         assert str(m.bcd) == 'bcd'
         assert str(m.bcd.cd) == 'cd'
         assert str(m.e) == 'e'
@@ -114,11 +114,11 @@ class TestOptionalRule:
 
         m, e = r.match('a')
         assert m and not e, '{} {}'.format(repr(m), repr(e))
-        assert str(m) == 'a'
+        assert m == 'a'
 
         m, e = r.match('b')
         assert m and not e, '{} {}'.format(repr(m), repr(e))
-        assert str(m) == ''
+        assert m == ''
 
     def test_optional_child(self):
         r = Rule('a',
@@ -128,19 +128,19 @@ class TestOptionalRule:
 
         m, e = r.match('abcde')
         assert m and not e
-        assert str(m) == 'abcde'
+        assert m == 'abcde'
         assert str(m.r1) == 'b'
         assert str(m.r2) == 'cd'
 
         m, e = r.match('acdef')
         assert m and not e
-        assert str(m) == 'acde'
+        assert m == 'acde'
         assert str(m.r1) == ''
         assert str(m.r2) == 'cd'
 
         m, e = r.match('aef')
         assert m and not e
-        assert str(m) == 'ae'
+        assert m == 'ae'
         assert str(m.r1) == ''
         assert str(m.r2) == ''
 
@@ -151,15 +151,15 @@ class TestOneOfRule:
 
         m, e = r.match('a')
         assert m and not e
-        assert str(m) == 'a'
+        assert m == 'a'
 
         m, e = r.match('b')
         assert m and not e
-        assert str(m) == 'b'
+        assert m == 'b'
 
         m, e = r.match('c')
         assert m and not e
-        assert str(m) == 'c'
+        assert m == 'c'
 
         m, e = r.match('d')
         assert e and not m
@@ -172,14 +172,14 @@ class TestOneOfRule:
 
         m, e = r.match('a')
         assert m and not e
-        assert str(m) == 'a'
+        assert m == 'a'
         assert str(m.r1) == 'a'
         assert not m.r2
         assert not m.r3
 
         m, e = r.match('b1')
         assert m and not e
-        assert str(m) == 'b1'
+        assert m == 'b1'
         assert str(m.r2) == 'b1'
         assert not m.r1
         assert not m.r3
@@ -203,17 +203,17 @@ class TestOneOfRule:
 
         m, e = r.match('a')
         assert m and not e
-        assert str(m) == 'a'
+        assert m == 'a'
 
         m, e = r.match('b')
         assert m and not e
-        assert str(m) == 'b'
+        assert m == 'b'
         with raises(AttributeError):
             assert str(m.d) == ''
 
         m, e = r.match('cd')
         assert m and not e
-        assert str(m) == 'cd'
+        assert m == 'cd'
         assert str(m.d) == 'd'
 
 
@@ -240,7 +240,7 @@ class TestTokenErrors:
 
         m, e = r.match('abc')
         assert m and not e
-        assert str(m) == 'abc'
+        assert m == 'abc'
         assert str(m.x) == 'bc'
         assert str(m.x.x) == 'c'
 
@@ -263,9 +263,9 @@ class TestTokenErrors:
 
         m, e = r.match('ab!')
         assert m and not e
-        assert str(m) == 'ab'
-        assert str(m.xx) == 'a'
-        assert str(m.yy) == 'b'
+        assert m == 'ab'
+        assert m.xx == 'a'
+        assert m.yy == 'b'
 
         with raises(TokenRedefinitionError):
             r.match('abc')
@@ -301,19 +301,19 @@ class TestAutomaticRuleNaming:
 
         m, e = morning_rule.match('Ann likes to drink tea with milk.')
         assert m
-        assert str(m.who) == 'Ann'
-        assert str(m.what) == 'tea with milk'
+        assert m.who == 'Ann'
+        assert m.what == 'tea with milk'
         assert not m.what.juice
         assert m.what.tea
-        assert str(m.what.tea.maybe_milk) != ''
+        assert m.what.tea.maybe_milk != ''
 
         m, e = morning_rule.match('Peter likes to drink tea.')
         assert m
-        assert str(m.who) == 'Peter'
-        assert str(m.what) == 'tea'
+        assert m.who == 'Peter'
+        assert m.what == 'tea'
         assert not m.what.juice
         assert m.what.tea
-        assert str(m.what.tea.maybe_milk) == ''
+        assert m.what.tea.maybe_milk == ''
 
         m, e = morning_rule.match('Peter likes to drink coffee.')
         assert e and not m
