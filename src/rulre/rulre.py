@@ -6,9 +6,6 @@ Grammar parsing library
 """
 
 # TODO: Consider adding empty optional matches as None (similarly to OneOf)
-# TODO: Consider adding automatic match comparison with strings
-# TODO: Consider adding default root rule
-# TODO: Change six
 
 import re
 import six
@@ -218,13 +215,35 @@ class Match(object):
         """
         return True
 
+    def __eq__(self, other):
+        """
+        When comparing with a string object, automatically compare the match text to the string.
+        """
+        if isinstance(other, Match):
+            return self is other
+        else:
+            return str(self) == other
+
+    def __ne__(self, other):
+        """
+        The reflection of __eq__. In Python 3 this is the default behavior, but in Python 2 it
+        has to be implemented explicitly.
+        """
+        return not self.__eq__(other)
+
     def __getattr__(self, item):
+        """
+        Named sub-matches act as member variables.
+        """
         if item in self._sub_matches:
             return self._sub_matches[item]
         else:
             raise AttributeError(item)
 
     def __iter__(self):
+        """
+        Iterates named sub-matches.
+        """
         return six.iteritems(self._sub_matches)
 
 

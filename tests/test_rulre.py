@@ -1,7 +1,37 @@
 from pytest import raises
 
 from rulre import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionError
-from rulre.rulre import BaseRule, CompoundRule, RuleNamingError
+from rulre.rulre import BaseRule, CompoundRule, RuleNamingError, Match
+
+
+class TestMatch:
+    def test_bool(self):
+        m = Match('', {'m': None})
+        assert m
+        assert len(m) == 0
+        assert not m.m
+
+    def test_comparison(self):
+        m1 = Match('xx', {})
+        m2 = Match('xx', {})
+        m3 = m1
+
+        assert m1 != m2
+        assert m1 == 'xx'
+        assert not m1 != 'xx'
+        assert str(m1) == str(m2)
+        assert m1 == m3
+        assert not m1 != m3
+
+    def test_sub_matches(self):
+        b = Match('b', {'c': None})
+        ab = Match('ab', {'b': b})
+
+        assert ab == 'ab'
+        assert ab.b == 'b'
+        assert not ab.b.c
+        with raises(AttributeError):
+            assert ab.b.d
 
 
 class TestRegexRule:
