@@ -1,12 +1,12 @@
 from pytest import raises
 
-import rulre
-from rulre import Rule, Optional, OneOf, Grammar
+from rulre import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionError
+from rulre.rulre import BaseRule, CompoundRule, RuleNamingError
 
 
 class TestRegexRule:
     def test_whole_match(self):
-        r = rulre.RegexRule('abcde')
+        r = RegexRule('abcde')
         m, e = r.match('abcde')
 
         assert m
@@ -14,7 +14,7 @@ class TestRegexRule:
         assert str(m) == 'abcde'
 
     def test_partial_match(self):
-        r = rulre.RegexRule('abcde')
+        r = RegexRule('abcde')
         m, e = r.match('abcdefgh')
 
         assert m
@@ -22,7 +22,7 @@ class TestRegexRule:
         assert str(m) == 'abcde'
 
     def test_match_not_from_start(self):
-        r = rulre.RegexRule('abcde')
+        r = RegexRule('abcde')
         m, e = r.match('1abcde')
 
         assert not m
@@ -196,7 +196,7 @@ class TestTokenErrors:
         assert e and not m
         assert e.position == 1
 
-        with raises(rulre.TokenRedefinitionError):
+        with raises(TokenRedefinitionError):
             r.match('ab')
 
     def test_child_redefinition(self):
@@ -218,7 +218,7 @@ class TestTokenErrors:
         r = OneOf(Rule.with_name('A')('a'),
                   Rule.with_name('A')('b'))
 
-        with raises(rulre.TokenRedefinitionError):
+        with raises(TokenRedefinitionError):
             r.match('ab')
 
     def test_flattened(self):
@@ -237,7 +237,7 @@ class TestTokenErrors:
         assert str(m.xx) == 'a'
         assert str(m.yy) == 'b'
 
-        with raises(rulre.TokenRedefinitionError):
+        with raises(TokenRedefinitionError):
             r.match('abc')
 
 
@@ -266,7 +266,7 @@ class TestAutomaticRuleNaming:
         morning_rule = Morning()
 
         assert morning_rule.juice.name == 'juice'
-        with raises(rulre.rulre.RuleNamingError):
+        with raises(RuleNamingError):
             morning_rule.juice.name = ''
 
         m, e = morning_rule.match('Ann likes to drink tea with milk.')
@@ -298,11 +298,11 @@ class TestAbstractClasses:
     """Test classes that are not supposed to be used directly."""
 
     def test_base_rule(self):
-        r = rulre.rulre.BaseRule()
+        r = BaseRule()
         with raises(NotImplementedError):
             r.match('')
 
     def test_compound_rule(self):
-        r = rulre.rulre.CompoundRule('r')
+        r = CompoundRule('r')
         with raises(NotImplementedError):
             r.match('')
