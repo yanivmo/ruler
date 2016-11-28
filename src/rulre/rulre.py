@@ -3,13 +3,11 @@ Grammar parsing library
 
 - Tokens are returned up to the failing rule;
 - Reports precise error position and the failure reason
+- Intuitive syntax
 """
-
-# TODO: Consider adding empty optional matches as None (similarly to OneOf)
 
 import re
 import six
-from builtins import object
 
 
 class Grammar(object):
@@ -207,13 +205,6 @@ class Match(object):
 
     def __len__(self):
         return len(self._text)
-
-    def __bool__(self):
-        """
-        Always True in boolean expressions. If this method is not defined, __len__ will be used,
-        meaning the object will be evaluated as False for empty matches.
-        """
-        return True
 
     def __eq__(self, other):
         """

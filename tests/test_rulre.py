@@ -6,10 +6,13 @@ from rulre.rulre import BaseRule, CompoundRule, RuleNamingError, Match
 
 class TestMatch:
     def test_bool(self):
-        m = Match('', {'m': None})
-        assert m
-        assert len(m) == 0
-        assert not m.m
+        m1 = Match('', {'m': None})
+        m2 = Match('a', {'m': None})
+        assert not m1
+        assert m1 is not None
+        assert m2
+        assert len(m1) == 0
+        assert not m1.m
 
     def test_comparison(self):
         m1 = Match('xx', {})
@@ -117,7 +120,7 @@ class TestOptionalRule:
         assert m == 'a'
 
         m, e = r.match('b')
-        assert m and not e, '{} {}'.format(repr(m), repr(e))
+        assert m is not None and not e, '{} {}'.format(repr(m), repr(e))
         assert m == ''
 
     def test_optional_child(self):
@@ -280,15 +283,15 @@ class TestAutomaticRuleNaming:
             who = 'John' | 'Peter' | 'Ann';
             what = tea | juice;
             juice = 'juice';
-            tea = 'tea', [' ', with_milk];
-            with_milk = 'with milk'
+            tea = 'tea', [' ', milk];
+            milk = 'with milk'
         """
 
         class Morning(Grammar):
             who = OneOf('John', 'Peter', 'Ann')
             juice = Rule('juice')
-            maybe_milk = Optional(' with milk')
-            tea = Rule('tea', maybe_milk)
+            milk = Optional(' with milk')
+            tea = Rule('tea', milk)
             what = OneOf(juice, tea)
 
             _grammar_ = Rule(who, ' likes to drink ', what, '\.')
@@ -305,7 +308,7 @@ class TestAutomaticRuleNaming:
         assert m.what == 'tea with milk'
         assert not m.what.juice
         assert m.what.tea
-        assert m.what.tea.maybe_milk != ''
+        assert m.what.tea.milk
 
         m, e = morning_rule.match('Peter likes to drink tea.')
         assert m
@@ -313,7 +316,7 @@ class TestAutomaticRuleNaming:
         assert m.what == 'tea'
         assert not m.what.juice
         assert m.what.tea
-        assert m.what.tea.maybe_milk == ''
+        assert not m.what.tea.milk
 
         m, e = morning_rule.match('Peter likes to drink coffee.')
         assert e and not m
