@@ -117,7 +117,7 @@ class Rule(CompoundRule):
 
             if mismatch:
                 mismatch_position = len(text) - len(text_to_match) + mismatch.position
-                return None, Mismatch(mismatch_position, mismatch.description)
+                return None, Mismatch(text, mismatch_position, mismatch.description)
             else:
                 # Remove the matched part from the text
                 text_to_match = text_to_match[len(match):]
@@ -142,7 +142,7 @@ class RegexRule(BaseRule):
         if m:
             return Match(m.group(), {}), None
         else:
-            return None, Mismatch(0, '"{}" does not match "{}"'.format(text, self._regex.pattern))
+            return None, Mismatch(text, 0, '"{}" does not match "{}"'.format(text, self._regex.pattern))
 
 
 class OneOf(CompoundRule):
@@ -176,7 +176,7 @@ class OneOf(CompoundRule):
         else:
             description = '\n'.join(set(
                 [m.description for m in mismatches if m.position == furthest_mismatch_position]))
-            return None, Mismatch(furthest_mismatch_position, description)
+            return None, Mismatch(text, furthest_mismatch_position, description)
 
 
 class Optional(Rule):
@@ -198,7 +198,7 @@ class Match(object):
 
     def __init__(self, text, sub_matches):
         self._text = text
-        self._sub_matches = sub_matches  # type: dict
+        self._sub_matches = sub_matches  # type: dict(str, Match)
 
     def __str__(self):
         return self._text
@@ -237,11 +237,29 @@ class Match(object):
         """
         return six.iteritems(self._sub_matches)
 
+    def __repr__(self):
+        return '<{class_name}({match_text!r}, {sub_matches}) at {id}>'.format(
+            class_name=self.__class__.__name__,
+            match_text=self._text,
+            sub_matches=[sub_match for sub_match in self._sub_matches],
+            id=hex(id(self))
+        )
+
 
 class Mismatch(object):
-    def __init__(self, position, description):
+    def __init__(self, text, position, description):
+        self.text = text
         self.position = position
         self.description = description
+
+    @property
+    def long_description(self):
+        return 'Mismatch at {position}:\n  {text}\n  {marker_indent}^\n{description}'.format(
+            position=self.position,
+            text=self.text,
+            marker_indent=' ' * self.position,
+            description=self.description
+        )
 
 
 class TokenRedefinitionError(Exception):
