@@ -36,6 +36,11 @@ class TestMatch:
         with raises(AttributeError):
             assert ab.b.d
 
+    def test_repr(self):
+        m = Match('text', {'a': 't', 'b': 'e'})
+        r = repr(m)
+        assert r.startswith("<Match('text', ['a', 'b']) at 0x") and r.endswith('>')
+
 
 class TestRegexRule:
     def test_whole_match(self):
@@ -75,6 +80,14 @@ class TestRule:
         m, e = r.match('b')
         assert e and not m
         assert e.position == 0, e.description
+
+    def test_actual_regex(self):
+        r = Rule('A number: ', '\d+', ' \[(x\w*x)\]')
+        m, e = r.match('A number: 12345 [xx]')
+
+        assert m, '\n' + e.long_description
+        assert not e
+        assert m == 'A number: 12345 [xx]'
 
     def test_chained_simplest_rules(self):
         r = Rule('a', 'b', 'c')
@@ -190,10 +203,18 @@ class TestOneOfRule:
         m, e = r.match('b3')
         assert e and not m
         assert e.position == 1
+        expected = ('Mismatch at 1:\n  b3\n   ^\n' +
+                    '"3" does not match "{}"\n' +
+                    '"3" does not match "{}"')
+        assert e.long_description == expected.format(1, 2) or expected.format(2, 1)
 
         m, e = r.match('b')
         assert e and not m
         assert e.position == 1
+        expected = ('Mismatch at 1:\n  b3\n   ^\n' +
+                    'reached end of line but expected "{}"\n' +
+                    'reached end of line but expected "{}"')
+        assert e.long_description == expected.format(1, 2) or expected.format(2, 1)
 
     def test_flattening(self):
         r = OneOf(

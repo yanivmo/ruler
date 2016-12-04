@@ -142,7 +142,11 @@ class RegexRule(BaseRule):
         if m:
             return Match(m.group(), {}), None
         else:
-            return None, Mismatch(text, 0, '"{}" does not match "{}"'.format(text, self._regex.pattern))
+            if text:
+                error_text = '"{}" does not match "{}"'.format(text, self._regex.pattern)
+            else:
+                error_text = 'reached end of line but expected "{}"'.format(self._regex.pattern)
+            return None, Mismatch(text, 0, error_text)
 
 
 class OneOf(CompoundRule):
@@ -241,7 +245,7 @@ class Match(object):
         return '<{class_name}({match_text!r}, {sub_matches}) at {id}>'.format(
             class_name=self.__class__.__name__,
             match_text=self._text,
-            sub_matches=[sub_match for sub_match in self._sub_matches],
+            sub_matches=sorted(self._sub_matches),
             id=hex(id(self))
         )
 
