@@ -8,12 +8,12 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='rulre',
+    name='ruler',
     version='1.0.0.dev1',
 
     description='Modular regular expressions with practical mismatch reporting',
     long_description=long_description,
-    url='https://github.com/yanivmo/rulre',
+    url='https://github.com/yanivmo/ruler',
     author='Yaniv Mordekhay',
     author_email='yaniv@linuxmail.org',
     license='MIT',
@@ -40,6 +40,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     keywords='regex parsing grammar'
 )

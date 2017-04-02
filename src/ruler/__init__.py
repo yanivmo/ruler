@@ -1,4 +1,4 @@
-from .rulre import \
+from .ruler import \
     Grammar, \
     Rule, \
     RegexRule, \

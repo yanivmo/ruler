@@ -1,7 +1,7 @@
-rulre
+ruler
 =====
 
-Rulre is a lightweight regular expressions wrapper. Its aim is to make regex definitions more
+Ruler is a lightweight regular expressions wrapper. Its aim is to make regex definitions more
 modular, intuitive, readable and the mismatch reporting more informative.
 
 
@@ -17,7 +17,7 @@ Let's implement the following grammar, given in EBNF_::
     tea = 'tea', [milk];
     milk = ' with milk';
 
-Using rulre it looks almost identical to EBNF_::
+Using ruler it looks almost identical to EBNF_::
 
     class Morning(Grammar):
         who = OneOf('John', 'Peter', 'Ann')
@@ -116,11 +116,13 @@ Performance
 -----------
 
 
+Development
+-----------
+
 
 TODO
 ----
-
-Tasks for the first release::
+::
 
     [X] TravisCI
     [X] tox/detox

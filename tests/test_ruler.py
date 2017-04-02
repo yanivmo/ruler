@@ -1,7 +1,7 @@
 from pytest import raises
 
-from rulre import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionError
-from rulre.rulre import BaseRule, CompoundRule, RuleNamingError, Match
+from ruler import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionError
+from ruler.ruler import BaseRule, CompoundRule, RuleNamingError, Match
 
 
 class TestMatch:
