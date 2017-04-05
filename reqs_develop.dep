@@ -1,0 +1,5 @@
+detox
+docutils-htmlwriter
+line-profiler
+pip-tools
+tox

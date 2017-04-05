@@ -119,6 +119,9 @@ Performance
 Development
 -----------
 
+1. Tox takes care almost of everything without installing anything manually.
+1. If tox is not enough then create a new virtualenv and ``pip install -r requirements_develop.txt``.
+1. Dependencies are managed by adding them to ``reqs_*.dep`` files and running pip-compile + pip-sync.
 
 TODO
 ----

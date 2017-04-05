@@ -6,6 +6,9 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
+# Get the installation requirements from install_requires.txt file
+with open(path.join(here, 'reqs_install.dep'), encoding='utf-8') as f:
+    install_requires = f.readlines()
 
 setup(
     name='ruler',
@@ -23,7 +26,7 @@ setup(
     # src is the root directory for all the packages
     package_dir={'': 'src'},
 
-    install_requires=['six'],
+    install_requires=install_requires,
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
