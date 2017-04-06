@@ -93,3 +93,6 @@ ENV/
 
 # README preview
 README.html
+
+# Performance profiling data
+*.lprof
