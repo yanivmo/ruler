@@ -1,3 +1,5 @@
+from line_profiler import LineProfiler
+
 from ruler import Rule, Optional, OneOf, Grammar
 
 
@@ -29,4 +31,10 @@ def one_match():
 
 
 if __name__ == '__main__':
+    profile = LineProfiler(Rule.match)
+    profile.enable()
+
     one_match()
+
+    profile.disable()
+    profile.print_stats()
