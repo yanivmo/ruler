@@ -115,6 +115,9 @@ grammar like this::
 Performance
 -----------
 
+The performance is measured by comparing the matching time with the standard re library.
+Currently ruler measures 20 times slower than re.
+
 
 Development
 -----------
