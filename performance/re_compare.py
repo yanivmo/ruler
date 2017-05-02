@@ -83,19 +83,19 @@ class RulerTimer(object):
         self.timer = timeit.Timer('self.match()', globals=locals())
 
     def match(self):
-        m, e = self.grammar.match(ann_likes_juice)
+        m, _ = self.grammar.match(ann_likes_juice)
         assert m.who == 'Ann'
         assert m.what == 'juice'
         assert m.what.juice
         assert not m.what.tea
         # assert not m.what.tea.milk
-        m, e = self.grammar.match(peter_likes_tea)
+        m, _ = self.grammar.match(peter_likes_tea)
         assert m.who == 'Peter'
         assert m.what == 'tea'
         assert not m.what.juice
         assert m.what.tea
         # assert not m.what.tea.milk
-        m, e = self.grammar.match(john_likes_tea_with_milk)
+        m, _ = self.grammar.match(john_likes_tea_with_milk)
         assert m.who == 'John'
         assert m.what == 'tea with milk'
         assert not m.what.juice
