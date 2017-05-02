@@ -2,6 +2,15 @@
 Ruler
 *****
 
+.. image:: https://travis-ci.org/yanivmo/ruler.svg?branch=master
+    :target: https://travis-ci.org/yanivmo/ruler
+    :alt: Build status
+
+.. image:: https://landscape.io/github/yanivmo/ruler/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/yanivmo/ruler/master
+   :alt: Code Health
+
+
 Ruler is a lightweight regular expressions wrapper. Its aim is to make regex definitions more
 modular, intuitive, readable and the mismatch reporting more informative.
 
@@ -177,6 +186,7 @@ TODO
     [ ] AppVeyor
     [ ] isort
     [X] Performance benchmarking
+    [ ] Online code coverage
 
 .. _EBNF: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 .. _pip-tools: https://github.com/jazzband/pip-tools
