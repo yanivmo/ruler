@@ -159,12 +159,12 @@ using `pip-tools`_. The process of updating the requirements is as follows:
 
 #. Add, remove or update a dependency in one of the ``reqs_*.dep`` files:
 
-  - Update ``reqs_install.dep`` if the dependency is needed for the regular installation by the end user,
-  - Update ``reqs_test.dep`` if the dependency is needed to run the unit tests but is not necessary for the
-    regular installation,
-  - Update ``reqs_profile.dep`` if the dependency is needed to run the performance profiling but is not necessary
-    for the regular installation,
-  - Update ``reqs_develop.dep`` if the dependency is not in one of the previous categories.
+   - Update ``reqs_install.dep`` if the dependency is needed for the regular installation by the end user,
+   - Update ``reqs_test.dep`` if the dependency is needed to run the unit tests but is not necessary for the
+     regular installation,
+   - Update ``reqs_profile.dep`` if the dependency is needed to run the performance profiling but is not necessary
+     for the regular installation,
+   - Update ``reqs_develop.dep`` if the dependency is not in one of the previous categories.
 
 #. Generate the requirements file running ``pip-compile``. The exact command is documented in the beginning of each
    requirements file.
