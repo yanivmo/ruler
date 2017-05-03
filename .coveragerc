@@ -1,0 +1,7 @@
+[report]
+show_missing = True
+
+[paths]
+source =
+    src/
+    .tox/*/*/site-packages/
