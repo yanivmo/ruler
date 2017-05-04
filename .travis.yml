@@ -12,5 +12,9 @@ matrix:
           env: TOXENV=py35-test
         - python: 3.6
           env: TOXENV=py36-test
-install: pip install tox
-script: tox
+install:
+    - pip install tox
+    - pip install python-coveralls
+script:
+    - tox
+    - coveralls --data_file .coverage.${TOXENV}
