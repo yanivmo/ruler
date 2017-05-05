@@ -17,6 +17,7 @@ Ruler
 Ruler is a lightweight regular expressions wrapper. Its aim is to make regex definitions more
 modular, intuitive, readable and the mismatch reporting more informative.
 
+----------
 
 .. warning::
     This project is in active development and is still unstable. It still might contain serious
@@ -187,11 +188,11 @@ TODO
     [ ] Upload to PyPI
     [X] flake8
     [ ] bumpversion
-    [X] Landscape
+    [X] Online code analysis (Landscape)
     [ ] AppVeyor
     [ ] isort
     [X] Performance benchmarking
-    [ ] Online code coverage
+    [X] Online code coverage (Coveralls)
 
 .. _EBNF: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 .. _pip-tools: https://github.com/jazzband/pip-tools
