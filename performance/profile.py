@@ -25,7 +25,7 @@ class Morning(Grammar):
 
 def one_match():
     morning_rule = Morning()
-    m, e = morning_rule.match('Ann likes to drink tea with milk.')
+    m, _ = morning_rule.match('Ann likes to drink tea with milk.')
     assert m
     assert m.what.tea.milk
 

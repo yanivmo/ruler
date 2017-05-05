@@ -10,6 +10,9 @@ Ruler
    :target: https://landscape.io/github/yanivmo/ruler/master
    :alt: Code Health
 
+.. image:: https://coveralls.io/repos/github/yanivmo/ruler/badge.svg?branch=master
+   :target: https://coveralls.io/github/yanivmo/ruler?branch=master
+
 
 Ruler is a lightweight regular expressions wrapper. Its aim is to make regex definitions more
 modular, intuitive, readable and the mismatch reporting more informative.
