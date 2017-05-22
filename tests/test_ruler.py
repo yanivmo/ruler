@@ -4,68 +4,21 @@ from ruler import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionEr
 from ruler.ruler import BaseRule, CompoundRule, RuleNamingError, Match
 
 
-class TestMatch:
-    def test_bool(self):
-        m1 = Match('', {'m': None})
-        m2 = Match('a', {'m': None})
-        assert not m1
-        assert m1 is not None
-        assert m2
-        assert len(m1) == 0
-        assert not m1.m
-
-    def test_comparison(self):
-        m1 = Match('xx', {})
-        m2 = Match('xx', {})
-        m3 = m1
-
-        assert m1 != m2
-        assert m1 == 'xx'
-        assert not m1 != 'xx'
-        assert str(m1) == str(m2)
-        assert m1 == m3
-        assert not m1 != m3
-
-    def test_sub_matches(self):
-        b = Match('b', {'c': None})
-        ab = Match('ab', {'b': b})
-
-        assert ab == 'ab'
-        assert ab.b == 'b'
-        assert not ab.b.c
-        with raises(AttributeError):
-            assert ab.b.d
-
-    def test_repr(self):
-        m = Match('text', {'a': 't', 'b': 'e'})
-        r = repr(m)
-        assert r.startswith("<Match('text', ['a', 'b']) at 0x") and r.endswith('>')
-
-
 class TestRegexRule:
     def test_whole_match(self):
         r = RegexRule('abcde')
-        m, e = r.match('abcde')
-
-        assert m
-        assert not e
-        assert m == 'abcde'
+        assert r.match('abcde')
+        assert r.matched == 'abcde'
 
     def test_partial_match(self):
         r = RegexRule('abcde')
-        m, e = r.match('abcdefgh')
-
-        assert m
-        assert not e
-        assert m == 'abcde'
+        assert r.match('abcdefgh')
+        assert r.matched == 'abcde'
 
     def test_match_not_from_start(self):
         r = RegexRule('abcde')
-        m, e = r.match('1abcde')
-
-        assert not m
-        assert e
-        assert e.position == 0
+        assert not r.match('1abcde')
+        assert r.error.position == 0
 
 
 class TestRule:
@@ -73,32 +26,25 @@ class TestRule:
         r = Rule.with_name('r1')('a')
         assert r.name == 'r1'
 
-        m, e = r.match('a')
-        assert m and not e
-        assert m == 'a'
+        assert r.match('a')
+        assert r.matched == 'a'
 
-        m, e = r.match('b')
-        assert e and not m
-        assert e.position == 0, e.description
+        assert not r.match('b')
+        assert r.error.position == 0, r.error.description
 
     def test_actual_regex(self):
         r = Rule('A number: ', '\d+', ' \[(x\w*x)\]')
-        m, e = r.match('A number: 12345 [xx]')
-
-        assert m, '\n' + e.long_description
-        assert not e
-        assert m == 'A number: 12345 [xx]'
+        assert r.match('A number: 12345 [xx]')
+        assert r.matched == 'A number: 12345 [xx]'
 
     def test_chained_simplest_rules(self):
         r = Rule('a', 'b', 'c')
 
-        m, e = r.match('abcdefg')
-        assert m and not e
-        assert m == 'abc'
+        assert r.match('abcdefg')
+        assert r.matched == 'abc'
 
-        m, e = r.match('abdefg')
-        assert e and not m
-        assert e.position == 2, e.description
+        assert not r.match('abdefg')
+        assert r.error.position == 2, e.description
 
     def test_nested_rules(self):
         class G(Grammar):
@@ -112,29 +58,25 @@ class TestRule:
 
         g = G()
 
-        m, e = g.match('abcde')
-        assert m and not e
-        assert m == 'abcde'
-        assert str(m.bcd) == 'bcd'
-        assert str(m.bcd.cd) == 'cd'
-        assert str(m.e) == 'e'
+        assert g.match('abcde')
+        assert g.matched == 'abcde'
+        assert g.bcd.matched == 'bcd'
+        assert g.bcd.cd.matched == 'cd'
+        assert g.e.matched == 'e'
 
-        m, e = g.match('abcef')
-        assert e and not m
-        assert e.position == 3, e.description
+        assert not g.match('abcef')
+        assert g.error.position == 3, g.error.description
 
 
 class TestOptionalRule:
     def test_simplest_rule(self):
         r = Optional('a')
 
-        m, e = r.match('a')
-        assert m and not e, '{} {}'.format(repr(m), repr(e))
-        assert m == 'a'
+        assert r.match('a')
+        assert r.matched == 'a'
 
-        m, e = r.match('b')
-        assert m is not None and not e, '{} {}'.format(repr(m), repr(e))
-        assert m == ''
+        assert r.match('b')
+        assert r.matched is None
 
     def test_optional_child(self):
         r = Rule('a',
@@ -142,79 +84,68 @@ class TestOptionalRule:
                  Optional.with_name('r2')('c', 'd'),
                  'e')
 
-        m, e = r.match('abcde')
-        assert m and not e
-        assert m == 'abcde'
-        assert str(m.r1) == 'b'
-        assert str(m.r2) == 'cd'
+        assert r.match('abcde')
+        assert r.matched == 'abcde'
+        assert r.r1.matched == 'b'
+        assert r.r2.matched == 'cd'
 
-        m, e = r.match('acdef')
-        assert m and not e
-        assert m == 'acde'
-        assert str(m.r1) == ''
-        assert str(m.r2) == 'cd'
+        assert r.match('acdef')
+        assert r.matched == 'acde'
+        assert r.r1.matched is None
+        assert r.r2.matched == 'cd'
 
-        m, e = r.match('aef')
-        assert m and not e
-        assert m == 'ae'
-        assert str(m.r1) == ''
-        assert str(m.r2) == ''
+        assert r.match('aef')
+        assert r.matched == 'ae'
+        assert r.r1.matched is None
+        assert r.r2.matched is None
 
 
 class TestOneOfRule:
     def test_simplest_rule(self):
         r = OneOf('a', 'b', 'c')
 
-        m, e = r.match('a')
-        assert m and not e
-        assert m == 'a'
+        assert r.match('a')
+        assert r.matched == 'a'
 
-        m, e = r.match('b')
-        assert m and not e
-        assert m == 'b'
+        assert r.match('b')
+        assert r.matched == 'b'
 
-        m, e = r.match('c')
-        assert m and not e
-        assert m == 'c'
+        assert r.match('c')
+        assert r.matched == 'c'
 
-        m, e = r.match('d')
-        assert e and not m
-        assert e.position == 0, e.description
+        assert not r.match('d')
+        assert r.error.position == 0, r.error.description
 
     def test_compound(self):
         r = OneOf(Rule.with_name('r1')('a'),
                   Rule.with_name('r2')('b', '1'),
                   Rule.with_name('r3')('b', '2'))
 
-        m, e = r.match('a')
-        assert m and not e
-        assert m == 'a'
-        assert str(m.r1) == 'a'
-        assert not m.r2
-        assert not m.r3
+        assert r.match('a')
+        assert r.matched == 'a'
+        assert r.r1.matched == 'a'
+        assert r.r2.matched is None
+        assert r.r3.matched is None
 
-        m, e = r.match('b1')
-        assert m and not e
-        assert m == 'b1'
-        assert str(m.r2) == 'b1'
-        assert not m.r1
-        assert not m.r3
+        assert r.match('b1')
+        assert r.matched == 'b1'
+        assert r.r2.matched == 'b1'
+        assert r.r1.matched is None
+        assert r.r3.matched is None
 
-        m, e = r.match('b3')
-        assert e and not m
-        assert e.position == 1
+        assert not r.match('b3')
+        assert r.error.position == 1
         expected = ('Mismatch at 1:\n  b3\n   ^\n' +
                     '"3" does not match "{}"\n' +
                     '"3" does not match "{}"')
-        assert e.long_description == expected.format(1, 2) or expected.format(2, 1)
+        assert r.error.long_description == expected.format(1, 2) or expected.format(2, 1)
 
-        m, e = r.match('b')
-        assert e and not m
-        assert e.position == 1
+        assert not r.match('b')
+        assert r.error.position == 1
         expected = ('Mismatch at 1:\n  b3\n   ^\n' +
                     'reached end of line but expected "{}"\n' +
                     'reached end of line but expected "{}"')
-        assert e.long_description == expected.format(1, 2) or expected.format(2, 1)
+        assert r.error.long_description == expected.format(1, 2) or expected.format(2, 1)
 
     def test_flattening(self):
         r = OneOf(
@@ -225,74 +156,49 @@ class TestOneOfRule:
                 Rule.with_name('d')('d')
             ))
 
-        m, e = r.match('a')
-        assert m and not e
-        assert m == 'a'
+        assert r.match('a')
+        assert r.matched == 'a'
 
-        m, e = r.match('b')
-        assert m and not e
-        assert m == 'b'
-        with raises(AttributeError):
-            assert str(m.d) == ''
+        assert r.match('b')
+        assert r.matched == 'b'
+        assert r.d.matched is None
 
-        m, e = r.match('cd')
-        assert m and not e
-        assert m == 'cd'
-        assert str(m.d) == 'd'
+        assert r.match('cd')
+        assert r.matched == 'cd'
+        assert r.d.matched == 'd'
 
 
 class TestTokenErrors:
     def test_sibling_redefinition(self):
-        r = Rule(Rule.with_name('A')('a'),
-                 Rule.with_name('A')('b'))
-
-        m, e = r.match('a')
-        assert e and not m
-        assert e.position == 1
+        with raises(TokenRedefinitionError):
+            Rule(Rule.with_name('A')('a'), Rule.with_name('A')('b'))
 
         with raises(TokenRedefinitionError):
-            r.match('ab')
+            OneOf(Rule.with_name('A')('a'), Rule.with_name('A')('b'))
 
     def test_child_redefinition(self):
         r = Rule.with_name('x')('a',
                                 Rule.with_name('x')('b',
                                                     Rule.with_name('x')('c')))
 
-        m, e = r.match('a')
-        assert e and not m
-        assert e.position == 1
+        assert not r.match('a')
+        assert r.error.position == 1
 
-        m, e = r.match('abc')
-        assert m and not e
-        assert m == 'abc'
-        assert str(m.x) == 'bc'
-        assert str(m.x.x) == 'c'
-
-    def test_oneof(self):
-        r = OneOf(Rule.with_name('A')('a'),
-                  Rule.with_name('A')('b'))
-
-        with raises(TokenRedefinitionError):
-            r.match('ab')
+        assert r.match('abc')
+        assert r.matched == 'abc'
+        assert r.x.matched == 'bc'
+        assert r.x.x.matched == 'c'
 
     def test_flattened(self):
-        r = Rule(
-            Rule.with_name('xx')('a'),
-            Rule(
-                Rule.with_name('yy')('b'),
-                Optional(
-                    Rule.with_name('xx')('c'))
-            )
-        )
-
-        m, e = r.match('ab!')
-        assert m and not e
-        assert m == 'ab'
-        assert m.xx == 'a'
-        assert m.yy == 'b'
-
         with raises(TokenRedefinitionError):
-            r.match('abc')
+            Rule(
+                Rule.with_name('xx')('a'),
+                Rule(
+                    Rule.with_name('yy')('b'),
+                    Optional(
+                        Rule.with_name('xx')('c'))
+                )
+            )
 
 
 class TestAutomaticRuleNaming:
@@ -317,35 +223,31 @@ class TestAutomaticRuleNaming:
 
             _grammar_ = Rule(who, ' likes to drink ', what, '\.')
 
-        morning_rule = Morning()
+        r = Morning()
 
-        assert morning_rule.juice.name == 'juice'
+        assert r.juice.name == 'juice'
         with raises(RuleNamingError):
-            morning_rule.juice.name = ''
+            r.juice.name = ''
 
-        m, e = morning_rule.match('Ann likes to drink tea with milk.')
-        assert m
-        assert m.who == 'Ann'
-        assert m.what == 'tea with milk'
-        assert not m.what.juice
-        assert m.what.tea
-        assert m.what.tea.milk
+        assert r.match('Ann likes to drink tea with milk.')
+        assert r.who.matched == 'Ann'
+        assert r.what.matched == 'tea with milk'
+        assert r.what.juice.matched is None
+        assert r.what.tea.matched
+        assert r.what.tea.milk.matched
 
-        m, e = morning_rule.match('Peter likes to drink tea.')
-        assert m
-        assert m.who == 'Peter'
-        assert m.what == 'tea'
-        assert not m.what.juice
-        assert m.what.tea
-        assert not m.what.tea.milk
+        assert r.match('Peter likes to drink tea.')
+        assert r.who.matched == 'Peter'
+        assert r.what.matched == 'tea'
+        assert r.what.juice.matched is None
+        assert r.what.tea.matched
+        assert r.what.tea.milk.matched is None
 
-        m, e = morning_rule.match('Peter likes to drink coffee.')
-        assert e and not m
-        assert e.position == 21
+        assert not r.match('Peter likes to drink coffee.')
+        assert r.error.position == 21
 
-        m, e = morning_rule.match('Peter likes to drink tea with lemon.')
-        assert e and not m
-        assert e.position == 24
+        assert not r.match('Peter likes to drink tea with lemon.')
+        assert r.error.position == 24
 
 
 class TestAbstractClasses:

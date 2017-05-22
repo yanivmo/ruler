@@ -12,6 +12,10 @@ import six
 
 class Grammar(object):
     def __init__(self, rule=None):
+        self.matched = None
+        self.error = None
+        self._root_rule = None
+
         # Collect and name member rules
         for attr_name in dir(self):
             attr = self.__getattribute__(attr_name)
@@ -24,8 +28,13 @@ class Grammar(object):
             # noinspection PyUnresolvedReferences
             self._root_rule = self._grammar_
 
+        self._root_rule.register_named_subrules()
+
     def match(self, text):
-        return self._root_rule.match(text)
+        result = self._root_rule.match(text)
+        self.matched = self._root_rule.matched
+        self.error = self._root_rule.error
+        return result
 
 
 class BaseRule(object):
@@ -35,6 +44,8 @@ class BaseRule(object):
 
     def __init__(self):
         self._name = ''
+        self.matched = None
+        self.error = None
 
     def match(self, text):
         raise NotImplementedError
@@ -49,6 +60,13 @@ class BaseRule(object):
             raise RuleNamingError(self._name)
         self._name = rule_name
 
+    def reset_match(self):
+        self.matched = None
+        self.error = None
+
+    def register_named_subrules(self):
+        return {}
+
 
 class CompoundRule(BaseRule):
     """
@@ -57,15 +75,39 @@ class CompoundRule(BaseRule):
     def __init__(self, *rules):
         super(CompoundRule, self).__init__()
 
+        self._named_rules = {}
         self._rules = []
         for rule in rules:
             if str(rule) == rule:
                 self._rules.append(RegexRule(rule))
             else:
                 self._rules.append(rule)
+        self.register_named_subrules()
 
     def match(self, text):
         raise NotImplementedError
+
+    def reset_match(self):
+        super(CompoundRule, self).reset_match()
+        for rule in self._rules:
+            rule.reset_match()
+
+    def register_named_subrules(self):
+        self._named_rules = {}
+
+        for rule in self._rules:
+            grandchild_rules = rule.register_named_subrules()
+            if rule.name:
+                if rule.name in self._named_rules:
+                    raise TokenRedefinitionError(self, rule.name)
+                else:
+                    self._named_rules[rule.name] = rule
+            else:
+                if self._named_rules.keys() & grandchild_rules.keys():  # TODO: 2/3 compatibility
+                    raise TokenRedefinitionError(self, self._named_rules.keys() & grandchild_rules.keys())
+                else:
+                    self._named_rules.update(grandchild_rules)
+        return self._named_rules
 
     @classmethod
     def with_name(cls, rule_name):
@@ -75,31 +117,22 @@ class CompoundRule(BaseRule):
             return rule
         return factory
 
-    @classmethod
-    def _build_match(cls, matched_text, sub_rule_matches):
+    def __getattr__(self, item):
         """
-        Match object factory.
-        :param matched_text: The text that was matched.
-        :param sub_rule_matches: A list of pairs mapping sub-rule objects to their matches.
-        :return: A tuple (Match, None)
+        Named sub-matches act as member variables.
         """
-        matches = {}
-        for rule, match in sub_rule_matches:
-            if rule.name:
-                # The sub-rule has a name, add its match as my sub-match
-                if rule.name in matches:
-                    raise TokenRedefinitionError(rule.name)
-                else:
-                    matches[rule.name] = match
-            elif match:  # match is allowed to be None here
-                # The sub-rule doesn't have a name, add its sub-matches as my own sub-matches
-                for rule_name, sub_match in match:
-                    if rule_name in matches:
-                        raise TokenRedefinitionError(rule_name)
-                    else:
-                        matches[rule_name] = sub_match
+        if item in self._named_rules:
+            return self._named_rules[item]
+        else:
+            raise AttributeError(item)
 
-        return Match(matched_text, matches), None
+    def __repr__(self):
+        return '{}(name={}, matched={}, rules={})'.format(
+            self.__class__.__name__,
+            repr(self._name),
+            repr(self.matched),
+            repr(self._rules)
+        )
 
 
 class Rule(CompoundRule):
@@ -108,23 +141,24 @@ class Rule(CompoundRule):
     """
     def match(self, text):
         text_to_match = text
-        sub_rule_matches = []
 
         # Advance through the text, matching each iteration the next rule
         for sub_rule in self._rules:
             # Try to match the next rule
-            match, mismatch = sub_rule.match(text_to_match)
-
-            if mismatch:
-                mismatch_position = len(text) - len(text_to_match) + mismatch.position
-                return None, Mismatch(text, mismatch_position, mismatch.description)
+            if sub_rule.match(text_to_match):
+                # Optional rules return True but might match None
+                if sub_rule.matched is not None:
+                    # Remove the matched part from the text
+                    text_to_match = text_to_match[len(sub_rule.matched):]
             else:
-                # Remove the matched part from the text
-                text_to_match = text_to_match[len(match):]
-                sub_rule_matches.append((sub_rule, match))
+                mismatch_position = len(text) - len(text_to_match) + sub_rule.error.position
+                self.error = Mismatch(text, mismatch_position, sub_rule.error.description)
+                self.matched = None
+                return False
 
-        matched_text = text[:-len(text_to_match)] if text_to_match else text
-        return self._build_match(matched_text, sub_rule_matches)
+        self.error = None
+        self.matched = text[:-len(text_to_match)] if text_to_match else text
+        return True
 
 
 class RegexRule(BaseRule):
@@ -140,13 +174,25 @@ class RegexRule(BaseRule):
     def match(self, text):
         m = self._regex.match(text)
         if m:
-            return Match(m.group(), {}), None
+            self.error = None
+            self.matched = m.group()
+            return True
         else:
             if text:
                 error_text = '"{}" does not match "{}"'.format(text, self._regex.pattern)
             else:
                 error_text = 'reached end of line but expected "{}"'.format(self._regex.pattern)
-            return None, Mismatch(text, 0, error_text)
+            self.error = Mismatch(text, 0, error_text)
+            self.matched = None
+            return False
+
+    def __repr__(self):
+        return '{}(name={}, matched={}, regex={})'.format(
+            self.__class__.__name__,
+            repr(self._name),
+            repr(self.matched),
+            repr(self._regex_text)
+        )
 
 
 class OneOf(CompoundRule):
@@ -154,33 +200,28 @@ class OneOf(CompoundRule):
     This rule matches if one of its sub-rules matches.
     """
     def match(self, text):
-        matches = []
-        mismatches = []
-        matched_text = None
-        furthest_mismatch_position = 0
+        self.matched = None
 
-        for sub_rule in self._rules:
-            # If already matched, just write down the names
-            if matched_text:
-                matches.append((sub_rule, None))
-            else:
-                match, mismatch = sub_rule.match(text)
+        # Iterate until the first match
+        sub_rules = iter(self._rules)
+        for sub_rule in sub_rules:
+            if sub_rule.match(text):
+                self.matched = sub_rule.matched
+                self.error = None
+                break
 
-                if match:
-                    matched_text = str(match)
-                    matches.append((sub_rule, match))
-                else:
-                    matches.append((sub_rule, None))
-                    mismatches.append(mismatch)
-                    if mismatch.position > furthest_mismatch_position:
-                        furthest_mismatch_position = mismatch.position
+        # Reset the matches of the remaining rules
+        for sub_rule in sub_rules:
+            sub_rule.reset_match()
 
-        if matched_text:
-            return self._build_match(matched_text, matches)
+        if self.matched is not None:
+            return True
         else:
+            furthest_mismatch_position = max((r.error.position for r in self._rules))
             description = '\n'.join(set(
-                [m.description for m in mismatches if m.position == furthest_mismatch_position]))
-            return None, Mismatch(text, furthest_mismatch_position, description)
+                (r.error.description for r in self._rules if r.error.position == furthest_mismatch_position)))
+            self.error = Mismatch(text, furthest_mismatch_position, description)
+            return False
 
 
 class Optional(Rule):
@@ -191,11 +232,10 @@ class Optional(Rule):
         super(Optional, self).__init__(*rules)
 
     def match(self, text):
-        match, mismatch = super(Optional, self).match(text)
-        if mismatch:
-            return Match('', {}), None
-        else:
-            return match, None
+        if not super(Optional, self).match(text):
+            self.error = None
+            self.matched = None
+        return True
 
 
 class Match(object):
@@ -268,8 +308,8 @@ class Mismatch(object):
 
 class TokenRedefinitionError(Exception):
     """Raised if a grammar contains multiple tokens with the same name"""
-    def __init__(self, token_name):
-        super(TokenRedefinitionError, self).__init__(token_name)
+    def __init__(self, rule, token_name):
+        super(TokenRedefinitionError, self).__init__('"{}" in {}'.format(token_name, repr(rule)))
 
 
 class RuleNamingError(Exception):

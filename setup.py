@@ -12,7 +12,7 @@ with open(path.join(here, 'reqs_install.dep'), encoding='utf-8') as f:
 
 setup(
     name='ruler',
-    version='1.0.0.dev1',
+    version='2.0.0.dev1',
 
     description='Modular regular expressions with practical mismatch reporting',
     long_description=long_description,
