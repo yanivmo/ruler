@@ -7,7 +7,7 @@ Grammar parsing library
 """
 
 import re
-import six
+# import six
 
 
 class Grammar(object):
@@ -103,8 +103,9 @@ class CompoundRule(BaseRule):
                 else:
                     self._named_rules[rule.name] = rule
             else:
-                if self._named_rules.keys() & grandchild_rules.keys():  # TODO: 2/3 compatibility
-                    raise TokenRedefinitionError(self, self._named_rules.keys() & grandchild_rules.keys())
+                redefined_keys = self._named_rules.keys() & grandchild_rules.keys()  # TODO: 2/3
+                if redefined_keys:
+                    raise TokenRedefinitionError(self, redefined_keys)
                 else:
                     self._named_rules.update(grandchild_rules)
         return self._named_rules
@@ -218,8 +219,13 @@ class OneOf(CompoundRule):
             return True
         else:
             furthest_mismatch_position = max((r.error.position for r in self._rules))
-            description = '\n'.join(set(
-                (r.error.description for r in self._rules if r.error.position == furthest_mismatch_position)))
+            description = '\n'.join(
+                set((
+                    r.error.description
+                    for r in self._rules
+                    if r.error.position == furthest_mismatch_position
+                ))
+            )
             self.error = Mismatch(text, furthest_mismatch_position, description)
             return False
 
@@ -236,58 +242,6 @@ class Optional(Rule):
             self.error = None
             self.matched = None
         return True
-
-
-class Match(object):
-
-    def __init__(self, text, sub_matches):
-        self._text = text
-        self._sub_matches = sub_matches  # type: dict(str, Match)
-
-    def __str__(self):
-        return self._text
-
-    def __len__(self):
-        return len(self._text)
-
-    def __eq__(self, other):
-        """
-        When comparing with a string object, automatically compare the match text to the string.
-        """
-        if isinstance(other, Match):
-            return self is other
-        else:
-            return str(self) == other
-
-    def __ne__(self, other):
-        """
-        The reflection of __eq__. In Python 3 this is the default behavior, but in Python 2 it
-        has to be implemented explicitly.
-        """
-        return not self.__eq__(other)
-
-    def __getattr__(self, item):
-        """
-        Named sub-matches act as member variables.
-        """
-        if item in self._sub_matches:
-            return self._sub_matches[item]
-        else:
-            raise AttributeError(item)
-
-    def __iter__(self):
-        """
-        Iterates named sub-matches.
-        """
-        return six.iteritems(self._sub_matches)
-
-    def __repr__(self):
-        return '<{class_name}({match_text!r}, {sub_matches}) at {id}>'.format(
-            class_name=self.__class__.__name__,
-            match_text=self._text,
-            sub_matches=sorted(self._sub_matches),
-            id=hex(id(self))
-        )
 
 
 class Mismatch(object):

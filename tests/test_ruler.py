@@ -1,7 +1,7 @@
 from pytest import raises
 
 from ruler import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionError
-from ruler.ruler import BaseRule, CompoundRule, RuleNamingError, Match
+from ruler.ruler import BaseRule, CompoundRule, RuleNamingError
 
 
 class TestRegexRule:
@@ -44,7 +44,7 @@ class TestRule:
         assert r.matched == 'abc'
 
         assert not r.match('abdefg')
-        assert r.error.position == 2, e.description
+        assert r.error.position == 2
 
     def test_nested_rules(self):
         class G(Grammar):
