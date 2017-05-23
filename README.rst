@@ -134,11 +134,25 @@ grammar like this::
 Performance
 ===========
 The performance is measured by comparing the matching time with the standard re library.
-Currently ruler measures 20 times slower than re.
+Currently ruler measures approximately 8 times slower than re.
 
 
 Development
 ===========
+
+* To run the tests::
+
+    pytest tests
+
+* To compare the performance to the re library::
+
+    python performance/re_compare.py
+
+* To run performance profiling of a specific method, ``Rule.match`` for example::
+
+    python performance/profile.py Rule.match
+
+  More than one method can be specified in the same command.
 
 Tox
 ---
