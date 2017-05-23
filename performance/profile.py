@@ -27,9 +27,8 @@ class Morning(ruler.Grammar):
 
 def one_match():
     morning_rule = Morning()
-    m, _ = morning_rule.match('Ann likes to drink tea with milk.')
-    assert m
-    assert m.what.tea.milk
+    assert morning_rule.match('Ann likes to drink tea with milk.')
+    assert morning_rule.what.tea.milk.matched
 
 
 def main():

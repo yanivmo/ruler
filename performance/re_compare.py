@@ -46,12 +46,14 @@ class ReTimer(object):
         assert g['juice'] is not None
         assert g['tea'] is None
         assert g['milk'] is None
+
         g = self.grammar.match(peter_likes_tea).groupdict()
         assert g['who'] == 'Peter'
         assert g['what'] == 'tea'
         assert g['juice'] is None
         assert g['tea'] is not None
         assert g['milk'] is None
+
         g = self.grammar.match(john_likes_tea_with_milk).groupdict()
         assert g['who'] == 'John'
         assert g['what'] == 'tea with milk'
@@ -83,24 +85,25 @@ class RulerTimer(object):
         self.timer = timeit.Timer('self.match()', globals=locals())
 
     def match(self):
-        m, _ = self.grammar.match(ann_likes_juice)
-        assert m.who == 'Ann'
-        assert m.what == 'juice'
-        assert m.what.juice
-        assert not m.what.tea
-        # assert not m.what.tea.milk
-        m, _ = self.grammar.match(peter_likes_tea)
-        assert m.who == 'Peter'
-        assert m.what == 'tea'
-        assert not m.what.juice
-        assert m.what.tea
-        # assert not m.what.tea.milk
-        m, _ = self.grammar.match(john_likes_tea_with_milk)
-        assert m.who == 'John'
-        assert m.what == 'tea with milk'
-        assert not m.what.juice
-        assert m.what.tea
-        assert m.what.tea.milk
+        g = self.grammar
+        assert g.match(ann_likes_juice)
+        assert g.who.matched == 'Ann'
+        assert g.what.matched == 'juice'
+        assert g.what.juice.matched
+        assert g.what.tea.matched is None
+
+        assert g.match(peter_likes_tea)
+        assert g.who.matched == 'Peter'
+        assert g.what.matched == 'tea'
+        assert g.what.juice.matched is None
+        assert g.what.tea.matched
+
+        assert g.match(john_likes_tea_with_milk)
+        assert g.who.matched == 'John'
+        assert g.what.matched == 'tea with milk'
+        assert g.what.juice.matched is None
+        assert g.what.tea
+        assert g.what.tea.milk
 
     def time(self):
         return self.timer.timeit(TIMEIT_ITERATIONS)
