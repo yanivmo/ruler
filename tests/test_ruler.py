@@ -236,6 +236,9 @@ class TestAutomaticRuleNaming:
         assert r.what.tea.matched
         assert r.what.tea.milk.matched
 
+        with raises(AttributeError):
+            assert r.what.tea.sugar.matched
+
         assert r.match('Peter likes to drink tea.')
         assert r.who.matched == 'Peter'
         assert r.what.matched == 'tea'

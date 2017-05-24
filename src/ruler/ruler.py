@@ -103,7 +103,7 @@ class CompoundRule(BaseRule):
                 else:
                     self._named_rules[rule.name] = rule
             else:
-                redefined_keys = self._named_rules.keys() & grandchild_rules.keys()  # TODO: 2/3
+                redefined_keys = set(self._named_rules) & set(grandchild_rules)
                 if redefined_keys:
                     raise TokenRedefinitionError(self, redefined_keys)
                 else:
