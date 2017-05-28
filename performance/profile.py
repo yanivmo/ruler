@@ -50,7 +50,7 @@ def main():
 
     profile = LineProfiler()
     for class_name, method_name in args.method_spec:
-        class_type = getattr(ruler.ruler, class_name)
+        class_type = getattr(ruler.rules, class_name)
         method = getattr(class_type, method_name)
         profile.add_function(method)
     profile.enable()

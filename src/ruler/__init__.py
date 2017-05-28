@@ -1,10 +1,11 @@
-from .ruler import \
+from .rules import \
     Grammar, \
     Rule, \
     RegexRule, \
     Optional, \
-    OneOf, \
-    TokenRedefinitionError
+    OneOf
+
+from .base_rules import TokenRedefinitionError
 
 __all__ = [
     'Grammar',

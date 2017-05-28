@@ -1,7 +1,8 @@
 from pytest import raises
 
 from ruler import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionError
-from ruler.ruler import BaseRule, CompoundRule, RuleNamingError
+from ruler.base_rules import BaseRule, BaseCompoundRule, RuleNamingError
+from ruler.rules import CompoundRule
 
 
 class TestRegexRule:
@@ -263,5 +264,9 @@ class TestAbstractClasses:
 
     def test_compound_rule(self):
         r = CompoundRule('r')
+        with raises(NotImplementedError):
+            r.match('')
+
+        r = BaseCompoundRule('r')
         with raises(NotImplementedError):
             r.match('')
