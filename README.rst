@@ -191,22 +191,5 @@ using `pip-tools`_. The process of updating the requirements is as follows:
 Notice that there is no need to edit ``setup.py`` - it will pull the dependencies by itself from ``reqs_install.dep``.
 
 
-TODO
-====
-::
-
-    [X] TravisCI
-    [X] tox/detox
-    [ ] Sphinx
-    [ ] Register on PyPI
-    [ ] Upload to PyPI
-    [X] flake8
-    [ ] bumpversion
-    [X] Online code analysis (Landscape)
-    [ ] AppVeyor
-    [ ] isort
-    [X] Performance benchmarking
-    [X] Online code coverage (Coveralls)
-
 .. _EBNF: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 .. _pip-tools: https://github.com/jazzband/pip-tools
