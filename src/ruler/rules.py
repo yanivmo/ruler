@@ -12,29 +12,29 @@ from .base_rules import BaseRule, BaseCompoundRule, Mismatch
 
 
 class Grammar(object):
-    def __init__(self, rule=None):
+    grammar = None
+
+    def __init__(self):
         self.matched = None
         self.error = None
-        self._root_rule = None
 
         # Collect and name member rules
         for attr_name in dir(self):
+
+            # 'grammar' is a reserved name
+            if attr_name == 'grammar':
+                continue
+
             attr = self.__getattribute__(attr_name)
             if isinstance(attr, BaseRule):
                 attr.name = attr_name
 
-        if rule:
-            self._root_rule = rule
-        elif '_grammar_' in dir(self):
-            # noinspection PyUnresolvedReferences
-            self._root_rule = self._grammar_
-
-        self._root_rule.register_named_subrules()
+        self.grammar.register_named_subrules()
 
     def match(self, text):
-        result = self._root_rule.match(text)
-        self.matched = self._root_rule.matched
-        self.error = self._root_rule.error
+        result = self.grammar.match(text)
+        self.matched = self.grammar.matched
+        self.error = self.grammar.error
         return result
 
 

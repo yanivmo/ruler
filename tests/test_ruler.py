@@ -52,10 +52,7 @@ class TestRule:
             cd = Rule('c', 'd')
             bcd = Rule('b', cd)
             e = Rule('e')
-            abcd = Rule('a', bcd, e)
-
-            def __init__(self):
-                super(G, self).__init__(self.abcd)
+            grammar = Rule('a', bcd, e)
 
         g = G()
 
@@ -221,8 +218,7 @@ class TestAutomaticRuleNaming:
             milk = Optional(' with milk')
             tea = Rule('tea', milk)
             what = OneOf(juice, tea)
-
-            _grammar_ = Rule(who, ' likes to drink ', what, '\.')
+            grammar = Rule(who, ' likes to drink ', what, '\.')
 
         r = Morning()
 
