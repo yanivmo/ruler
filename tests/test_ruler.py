@@ -54,7 +54,7 @@ class TestRule:
             e = Rule('e')
             grammar = Rule('a', bcd, e)
 
-        g = G()
+        g = G.create()
 
         assert g.match('abcde')
         assert g.matched == 'abcde'
@@ -212,7 +212,7 @@ class TestAutomaticRuleNaming:
             milk = 'with milk'
         """
 
-        class Morning(Grammar):
+        class MorningGrammar(Grammar):
             who = OneOf('John', 'Peter', 'Ann')
             juice = Rule('juice')
             milk = Optional(' with milk')
@@ -220,11 +220,11 @@ class TestAutomaticRuleNaming:
             what = OneOf(juice, tea)
             grammar = Rule(who, ' likes to drink ', what, '\.')
 
-        r = Morning()
+        r = MorningGrammar.create()
 
-        assert r.juice.name == 'juice'
+        assert MorningGrammar.juice.name == 'juice'
         with raises(RuleNamingError):
-            r.juice.name = ''
+            MorningGrammar.juice.name = ''
 
         assert r.match('Ann likes to drink tea with milk.')
         assert r.who.matched == 'Ann'

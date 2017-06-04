@@ -14,28 +14,22 @@ from .base_rules import BaseRule, BaseCompoundRule, Mismatch
 class Grammar(object):
     grammar = None
 
-    def __init__(self):
-        self.matched = None
-        self.error = None
-
+    @classmethod
+    def create(cls):
         # Collect and name member rules
-        for attr_name in dir(self):
+        for attr_name in dir(cls):
 
             # 'grammar' is a reserved name
             if attr_name == 'grammar':
                 continue
 
-            attr = self.__getattribute__(attr_name)
+            attr = getattr(cls, attr_name)
             if isinstance(attr, BaseRule):
                 attr.name = attr_name
 
-        self.grammar.register_named_subrules()
+        cls.grammar.register_named_subrules()
 
-    def match(self, text):
-        result = self.grammar.match(text)
-        self.matched = self.grammar.matched
-        self.error = self.grammar.error
-        return result
+        return cls.grammar
 
 
 class CompoundRule(BaseCompoundRule):
