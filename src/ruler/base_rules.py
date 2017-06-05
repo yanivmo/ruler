@@ -27,7 +27,14 @@ class BaseRule(object):
         self.error = None
 
     def register_named_subrules(self):
+        """
+        Make all the child rules, that have names, behave as member variables of
+        their parent rules.
+        """
         return {}
+
+    def clone(self):
+        raise NotImplementedError
 
 
 class BaseCompoundRule(BaseRule):
@@ -71,6 +78,11 @@ class BaseCompoundRule(BaseRule):
                 else:
                     self._named_rules.update(grandchild_rules)
         return self._named_rules
+
+    def clone(self):
+        twin = type(self)(*[rule.clone() for rule in self._rules])
+        twin.name = self.name
+        return twin
 
     @classmethod
     def with_name(cls, rule_name):

@@ -65,6 +65,23 @@ class TestRule:
         assert not g.match('abcef')
         assert g.error.position == 3, g.error.description
 
+    def test_rule_reuse(self):
+        class G(Grammar):
+            reused = Rule('..')
+            a = Rule('a', reused)
+            b = Rule('b', reused)
+            c = Rule('c', reused)
+            grammar = Rule(a, b, c)
+
+        g = G.create()
+        assert g.match('a11b22c33')
+        assert g.a.matched == 'a11'
+        assert g.a.reused.matched == '11'
+        assert g.b.matched == 'b22'
+        assert g.b.reused.matched == '22'
+        assert g.c.matched == 'c33'
+        assert g.c.reused.matched == '33'
+
 
 class TestOptionalRule:
     def test_simplest_rule(self):
@@ -257,6 +274,8 @@ class TestAbstractClasses:
         r = BaseRule()
         with raises(NotImplementedError):
             r.match('')
+        with raises(NotImplementedError):
+            r.clone()
 
     def test_compound_rule(self):
         r = CompoundRule('r')

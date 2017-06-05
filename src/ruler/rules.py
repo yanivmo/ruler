@@ -29,7 +29,7 @@ class Grammar(object):
 
         cls.grammar.register_named_subrules()
 
-        return cls.grammar
+        return cls.grammar.clone()
 
 
 class CompoundRule(BaseCompoundRule):
@@ -90,6 +90,11 @@ class RegexRule(BaseRule):
             self.error = Mismatch(text, 0, error_text)
             self.matched = None
             return False
+
+    def clone(self):
+        twin = RegexRule(self._regex_text)
+        twin.name = self.name
+        return twin
 
     def __repr__(self):
         return '{}(name={}, matched={}, regex={})'.format(
