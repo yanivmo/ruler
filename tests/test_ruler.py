@@ -1,6 +1,6 @@
 from pytest import raises
 
-from ruler import Rule, Optional, OneOf, Grammar, RegexRule, TokenRedefinitionError
+from ruler import Rule, Optional, OneOf, Grammar, RegexRule
 from ruler.base_rules import BaseRule, BaseCompoundRule, RuleNamingError
 from ruler.rules import CompoundRule
 
@@ -185,11 +185,22 @@ class TestOneOfRule:
 
 class TestTokenErrors:
     def test_sibling_redefinition(self):
-        with raises(TokenRedefinitionError):
-            Rule(Rule.with_name('A')('a'), Rule.with_name('A')('b'))
+        r = Rule(Rule.with_name('x')('a'), Rule.with_name('x')('b'))
 
-        with raises(TokenRedefinitionError):
-            OneOf(Rule.with_name('A')('a'), Rule.with_name('A')('b'))
+        assert r.match('ab')
+        assert r.x[0].matched == 'a'
+        assert r.x[1].matched == 'b'
+
+    def test_oneof_sibling_redefinition(self):
+        r = OneOf(Rule.with_name('x')('a'), Rule.with_name('x')('b'))
+
+        assert r.match('a')
+        assert r.x[0].matched == 'a'
+        assert r.x[1].matched is None
+
+        assert r.match('b')
+        assert r.x[0].matched is None
+        assert r.x[1].matched == 'b'
 
     def test_child_redefinition(self):
         r = Rule.with_name('x')('a',
@@ -205,8 +216,7 @@ class TestTokenErrors:
         assert r.x.x.matched == 'c'
 
     def test_flattened(self):
-        with raises(TokenRedefinitionError):
-            Rule(
+        r = Rule(
                 Rule.with_name('xx')('a'),
                 Rule(
                     Rule.with_name('yy')('b'),
@@ -214,6 +224,16 @@ class TestTokenErrors:
                         Rule.with_name('xx')('c'))
                 )
             )
+
+        assert r.match('abc')
+        assert r.xx[0].matched == 'a'
+        assert r.yy.matched == 'b'
+        assert r.xx[1].matched == 'c'
+
+        assert r.match('ab')
+        assert r.xx[0].matched == 'a'
+        assert r.yy.matched == 'b'
+        assert r.xx[1].matched is None
 
 
 class TestAutomaticRuleNaming:
@@ -230,12 +250,13 @@ class TestAutomaticRuleNaming:
         """
 
         class MorningGrammar(Grammar):
-            who = OneOf('John', 'Peter', 'Ann')
+            person = OneOf('John', 'Peter', 'Ann', 'Paul', 'Rachel')
+            who = Rule(person, Optional(', ', person), Optional(' and ', person))
             juice = Rule('juice')
             milk = Optional(' with milk')
             tea = Rule('tea', milk)
             what = OneOf(juice, tea)
-            grammar = Rule(who, ' likes to drink ', what, '\.')
+            grammar = Rule(who, ' like', Optional('s'), ' to drink ', what, '\.')
 
         r = MorningGrammar.create()
 
@@ -259,6 +280,15 @@ class TestAutomaticRuleNaming:
         assert r.what.juice.matched is None
         assert r.what.tea.matched
         assert r.what.tea.milk.matched is None
+
+        assert r.match('Peter, Rachel and Ann like to drink juice.')
+        assert r.who.matched == 'Peter, Rachel and Ann'
+        assert r.who.person[0].matched == 'Peter'
+        assert r.who.person[1].matched == 'Rachel'
+        assert r.who.person[2].matched == 'Ann'
+        assert r.what.matched == 'juice'
+        assert r.what.juice.matched is not None
+        assert r.what.tea.matched is None
 
         assert not r.match('Peter likes to drink coffee.')
         assert r.error.position == 21

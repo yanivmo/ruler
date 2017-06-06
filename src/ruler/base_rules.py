@@ -1,3 +1,5 @@
+import collections
+
 
 class BaseRule(object):
     """
@@ -65,18 +67,25 @@ class BaseCompoundRule(BaseRule):
         self._named_rules = {}
 
         for rule in self._rules:
-            grandchild_rules = rule.register_named_subrules()
+            # If a rule has a name, the rule itself will be added as a named sub-rule;
+            # if doesn't have a name, the named sub-rules of the rule will be added as
+            # direct named sub-rules, skipping one level
+            subrules = rule.register_named_subrules()
             if rule.name:
-                if rule.name in self._named_rules:
-                    raise TokenRedefinitionError(self, rule.name)
+                subrules = {rule.name: rule}
+
+            for name, subrule in subrules.items():
+                existing = self._named_rules.get(name)
+                # If more than one named sub-rule with the same name exist, the name
+                # will actually reference a list of rules
+                if existing:
+                    if isinstance(existing, collections.MutableSequence):
+                        existing.append(subrule)
+                    else:
+                        self._named_rules[name] = [existing, subrule]
                 else:
-                    self._named_rules[rule.name] = rule
-            else:
-                redefined_keys = set(self._named_rules) & set(grandchild_rules)
-                if redefined_keys:
-                    raise TokenRedefinitionError(self, redefined_keys)
-                else:
-                    self._named_rules.update(grandchild_rules)
+                    self._named_rules[name] = subrule
+
         return self._named_rules
 
     def clone(self):
@@ -124,12 +133,6 @@ class Mismatch(object):
             marker_indent=' ' * self.position,
             description=self.description
         )
-
-
-class TokenRedefinitionError(Exception):
-    """Raised if a grammar contains multiple tokens with the same name"""
-    def __init__(self, rule, token_name):
-        super(TokenRedefinitionError, self).__init__('"{}" in {}'.format(token_name, repr(rule)))
 
 
 class RuleNamingError(Exception):

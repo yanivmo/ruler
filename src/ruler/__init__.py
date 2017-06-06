@@ -5,13 +5,10 @@ from .rules import \
     Optional, \
     OneOf
 
-from .base_rules import TokenRedefinitionError
-
 __all__ = [
     'Grammar',
     'Rule',
     'RegexRule',
     'Optional',
     'OneOf',
-    'TokenRedefinitionError',
 ]
