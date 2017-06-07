@@ -77,10 +77,9 @@ class RulerTimer(object):
             milk = r.Rule('milk')
             tea = r.Rule('tea', r.Optional(' with ', milk))
             what = r.OneOf(juice, tea)
+            grammar = r.Rule(who, ' likes to drink ', what)
 
-            _grammar_ = r.Rule(who, ' likes to drink ', what)
-
-        self.grammar = MorningDrink()
+        self.grammar = MorningDrink.create()
 
         self.timer = timeit.Timer('self.match()', globals=locals())
 

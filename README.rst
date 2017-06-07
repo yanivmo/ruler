@@ -108,8 +108,8 @@ True
 
 Performance
 ===========
-The performance is measured by comparing the matching time with the standard re library.
-Currently ruler measures approximately 8 times slower than re.
+The performance is measured by comparing the matching time with the standard ``re`` library.
+Currently ruler measures approximately ten times slower than ``re``.
 
 
 Development

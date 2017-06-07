@@ -21,12 +21,11 @@ class Morning(ruler.Grammar):
     milk = ruler.Optional(' with milk')
     tea = ruler.Rule('tea', milk)
     what = ruler.OneOf(juice, tea)
-
-    _grammar_ = ruler.Rule(who, ' likes to drink ', what, '\.')
+    grammar = ruler.Rule(who, ' likes to drink ', what, '\.')
 
 
 def one_match():
-    morning_rule = Morning()
+    morning_rule = Morning.create()
     assert morning_rule.match('Ann likes to drink tea with milk.')
     assert morning_rule.what.tea.milk.matched
 
