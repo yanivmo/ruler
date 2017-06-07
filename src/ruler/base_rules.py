@@ -10,6 +10,7 @@ class BaseRule(object):
         self._name = ''
         self.matched = None
         self.error = None
+        self._mismatch = Mismatch()
 
     def match(self, text):
         raise NotImplementedError
@@ -120,7 +121,12 @@ class BaseCompoundRule(BaseRule):
 
 
 class Mismatch(object):
-    def __init__(self, text, position, description):
+    def __init__(self):
+        self.text = ''
+        self.position = -1
+        self.description = ''
+
+    def set(self, text, position, description):
         self.text = text
         self.position = position
         self.description = description

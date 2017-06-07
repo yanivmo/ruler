@@ -8,7 +8,7 @@ Grammar parsing library
 
 import re
 
-from .base_rules import BaseRule, BaseCompoundRule, Mismatch
+from .base_rules import BaseRule, BaseCompoundRule
 
 
 class Grammar(object):
@@ -57,7 +57,8 @@ class Rule(CompoundRule):
                     text_to_match = text_to_match[len(sub_rule.matched):]
             else:
                 mismatch_position = len(text) - len(text_to_match) + sub_rule.error.position
-                self.error = Mismatch(text, mismatch_position, sub_rule.error.description)
+                self._mismatch.set(text, mismatch_position, sub_rule.error.description)
+                self.error = self._mismatch
                 self.matched = None
                 return False
 
@@ -87,7 +88,8 @@ class RegexRule(BaseRule):
                 error_text = '"{}" does not match "{}"'.format(text, self._regex.pattern)
             else:
                 error_text = 'reached end of line but expected "{}"'.format(self._regex.pattern)
-            self.error = Mismatch(text, 0, error_text)
+            self._mismatch.set(text, 0, error_text)
+            self.error = self._mismatch
             self.matched = None
             return False
 
@@ -135,7 +137,8 @@ class OneOf(CompoundRule):
                     if r.error.position == furthest_mismatch_position
                 ))
             )
-            self.error = Mismatch(text, furthest_mismatch_position, description)
+            self._mismatch.set(text, furthest_mismatch_position, description)
+            self.error = self._mismatch
             return False
 
 
