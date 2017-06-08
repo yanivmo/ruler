@@ -33,17 +33,17 @@ Let's implement the following grammar, given in EBNF_::
 Using ruler it looks almost identical to EBNF_:
 
 >>> class Morning(Grammar):
-...     who = OneOf('John', 'Peter', 'Ann')
+...     who = OneOf('John', 'Peter', 'Ann', 'Paul', 'Rachel')
 ...     juice = Rule('juice')
 ...     milk = Optional(' with milk')
 ...     tea = Rule('tea', milk)
 ...     what = OneOf(juice, tea)
+...     grammar = Rule(who, ' likes to drink ', what, '\.')
 ...
-...     _grammar_ = Rule(who, ' likes to drink ', what, '\.')
-...
-... morning = Morning()
+... morning = Morning.create()
 
-Let's start rather with a mismatch:
+A member named ``grammar`` must be always present - it acts as the start rule.
+Let's begin rather with a mismatch:
 
 >>> morning.match('John likes to drink coffee')
 False
@@ -65,8 +65,7 @@ Let's fix our text:
 True
 
 Any rule that is declared as a member variable of your grammar class acts as a named capture group
-arranged hierarchically. Use ``matched`` attribute to retrieve the text matched by the specific
-rule:
+arranged hierarchically. Use ``matched`` attribute to retrieve the text matched by a specific rule:
 
 >>> morning.matched
 'John likes to drink tea.'
@@ -85,6 +84,34 @@ False
 >>> morning.what.tea.milk.matched is None
 True
 
+Rules can be reused multiple times. If the same rule appears multiple times under the same parent,
+these rules are collected into a list:
+
+>>> class Morning(Grammar):
+...     person = OneOf('John', 'Peter', 'Ann', 'Paul', 'Rachel')
+...     who = Rule(person, Optional(', ', person), Optional(' and ', person))
+...     juice = Rule('juice')
+...     milk = Optional(' with milk')
+...     tea = Rule('tea', milk)
+...     what = OneOf(juice, tea)
+...     grammar = Rule(who, ' like', Optional('s'), ' to drink ', what, '\.')
+...
+... morning = Morning.create()
+... morning.match('Peter, Rachel and Ann like to drink juice.')
+True
+>>> morning.who.matched
+'Peter, Rachel and Ann'
+>>> morning.who.person[0].matched
+'Peter'
+>>> morning.who.person[1].matched
+'Rachel'
+>>> morning.who.person[2].matched
+'Ann'
+
+Notice that, in the grammar above, ``person`` rule is never a direct child of ``who`` but still
+is accessed as such. That is because when a rule hierarchy is built, a rule is placed under its
+closest named ancestor.
+
 Rules' string arguments may actually be any valid regular expression. So we could rewrite our
 grammar like this:
 
@@ -94,8 +121,7 @@ grammar like this:
 ...     milk = Optional(' with milk')
 ...     tea = Rule('tea', milk)
 ...     what = OneOf(juice, tea)
-...
-...     _grammar_ = Rule(who, ' likes to drink ', what, '\.')
+...     grammar = Rule(who, ' likes to drink ', what, '\.')
 ...
 ... morning = Morning()
 ... morning.match('R2D2 likes to drink juice. And nothing else matters.')
@@ -108,8 +134,10 @@ True
 
 Performance
 ===========
-The performance is measured by comparing the matching time with the standard ``re`` library.
-Currently ruler measures approximately ten times slower than ``re``.
+The library is well optimized for fast matching. Nevertheless it is important to remember
+that this is a Python wrapper of the regex library and as such can never outperform matching
+directly using the regex library. Currently ruler measures approximately ten times slower
+than ``re``.
 
 
 Development
