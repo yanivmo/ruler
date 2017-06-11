@@ -13,6 +13,12 @@ class BaseRule(object):
         self._mismatch = Mismatch()
 
     def match(self, text):
+        """
+        Attempt to match the text.
+        The results of the last match are storred in ``error`` and ``matched`` attributes.
+        Each consecutive match overrides the previous results.
+        :return: True if the match was successful, False otherwise.
+        """
         raise NotImplementedError
 
     @property
@@ -37,6 +43,10 @@ class BaseRule(object):
         return {}
 
     def clone(self):
+        """
+        Create a new rule object having exactly the same name and matching conditions as self.
+        :return: A new rule object of the same type as self.
+        """
         raise NotImplementedError
 
 
@@ -121,6 +131,9 @@ class BaseCompoundRule(BaseRule):
 
 
 class Mismatch(object):
+    """
+    Describes matching error.
+    """
     def __init__(self):
         self.text = ''
         self.position = -1

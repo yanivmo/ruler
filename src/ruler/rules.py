@@ -1,17 +1,16 @@
-"""
-Grammar parsing library
-
-- Tokens are returned up to the failing rule;
-- Reports precise error position and the failure reason
-- Intuitive syntax
-"""
-
 import re
 
 from .base_rules import BaseRule, BaseCompoundRule
 
 
 class Grammar(object):
+    """
+    Rules container.
+    This class is intended to be inherited and contain all the rules of a grammar.
+    The main purpose of the class is to name the rules and arrange them hierarchically.
+
+    The inheriting class must assign the root rule to ``grammar`` attribute.
+    """
     grammar = None
 
     @classmethod
