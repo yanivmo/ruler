@@ -24,7 +24,7 @@ Quick start
 Let's implement the following grammar, given in EBNF_::
 
     grammar = who, ' likes to drink ', what;
-    who = 'John' | 'Peter' | 'Ann';
+    who = 'John' | 'Peter' | 'Ann' | 'Paul' | 'Rachel';
     what = tea | juice;
     juice = 'juice';
     tea = 'tea', [milk];
