@@ -12,9 +12,9 @@ with open(path.join(here, 'reqs_install.dep'), encoding='utf-8') as f:
 
 setup(
     name='ruler',
-    version='2.0.0.dev1',
+    version='2.0.0',
 
-    description='Modular regular expressions with practical mismatch reporting',
+    description='Humane grammar library',
     long_description=long_description,
     url='https://github.com/yanivmo/ruler',
     author='Yaniv Mordekhay',
@@ -30,7 +30,7 @@ setup(
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
