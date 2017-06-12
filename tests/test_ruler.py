@@ -183,7 +183,7 @@ class TestOneOfRule:
         assert r.d.matched == 'd'
 
 
-class TestTokenErrors:
+class TestTokenRedefinitions:
     def test_sibling_redefinition(self):
         r = Rule(Rule.with_name('x')('a'), Rule.with_name('x')('b'))
 
@@ -236,18 +236,8 @@ class TestTokenErrors:
         assert r.xx[1].matched is None
 
 
-class TestAutomaticRuleNaming:
+class TestGrammarClass:
     def test_example(self):
-        """
-        Implementation of the following grammar::
-
-            grammar = who, ' likes to drink ', what;
-            who = 'John' | 'Peter' | 'Ann';
-            what = tea | juice;
-            juice = 'juice';
-            tea = 'tea', [' ', milk];
-            milk = 'with milk'
-        """
 
         class MorningGrammar(Grammar):
             person = OneOf('John', 'Peter', 'Ann', 'Paul', 'Rachel')
@@ -295,6 +285,28 @@ class TestAutomaticRuleNaming:
 
         assert not r.match('Peter likes to drink tea with lemon.')
         assert r.error.position == 24
+
+    def test_empty_rules(self):
+        class EmptyGrammar(Grammar):
+            a = Rule('')
+            b = Rule(a, a)
+            c = OneOf(a, a, a)
+            d = Optional(b)
+            grammar = Rule(a, b, c, d)
+
+        g = EmptyGrammar.create()
+        assert g.match('')
+        assert g.a.matched == ''
+        assert g.b.matched == ''
+        assert g.b.a[0].matched == ''
+        assert g.b.a[1].matched == ''
+        assert g.c.a[0].matched == ''
+        assert g.c.a[1].matched is None
+        assert g.c.a[2].matched is None
+        assert g.d.matched == ''
+        assert g.d.b.matched == ''
+        assert g.d.b.a[0].matched == ''
+        assert g.d.b.a[1].matched == ''
 
 
 class TestAbstractClasses:
