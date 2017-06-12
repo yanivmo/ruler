@@ -2,3 +2,5 @@ detox
 docutils-htmlwriter
 pip-tools
 tox
+twine
+wheel
