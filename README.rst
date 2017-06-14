@@ -13,9 +13,18 @@ Ruler
 .. image:: https://coveralls.io/repos/github/yanivmo/ruler/badge.svg?branch=master
    :target: https://coveralls.io/github/yanivmo/ruler?branch=master
 
+.. image:: https://img.shields.io/pypi/v/ruler.svg
+   :target: https://pypi.python.org/pypi/ruler
+
 
 Ruler is a lightweight regular expressions wrapper aiming to make regex definitions more
 modular, intuitive, readable and the mismatch reporting more informative.
+
+Installation
+============
+::
+
+    pip install ruler
 
 
 Quick start
