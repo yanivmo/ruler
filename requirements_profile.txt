@@ -13,7 +13,7 @@ line-profiler==2.0
 packaging==16.8           # via setuptools
 pickleshare==0.7.4        # via ipython
 prompt-toolkit==1.0.14    # via ipython
-pygments==2.2.0           # via ipython
+pygments==2.7.4           # via ipython
 pyparsing==2.2.0          # via packaging
 simplegeneric==0.8.1      # via ipython
 six==1.10.0
