@@ -20,7 +20,7 @@ flake8==3.3.0
 greenlet==0.4.12          # via eventlet
 idna==2.5                 # via requests
 ipython-genutils==0.2.0   # via traitlets
-ipython==6.1.0            # via line-profiler
+ipython==7.16.3            # via line-profiler
 jedi==0.10.2              # via ipython
 line-profiler==2.0
 mccabe==0.6.1             # via flake8
