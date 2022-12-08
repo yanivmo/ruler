@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file requirements_develop.txt reqs_install.dep reqs_test.dep reqs_profile.dep reqs_develop.dep
 #
-certifi==2017.4.17        # via requests
+certifi==2022.12.7        # via requests
 chardet==3.0.4            # via requests
 click==6.7                # via pip-tools
 colorama==0.3.7           # via ipython, pytest
