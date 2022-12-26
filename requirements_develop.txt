@@ -46,7 +46,7 @@ twine==1.9.1
 urllib3==1.21.1           # via requests
 virtualenv==15.1.0        # via tox
 wcwidth==0.1.7            # via prompt-toolkit
-wheel==0.29.0
+wheel==0.38.1
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools                # via ipython, pytest, twine
